@@ -11,10 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('eleves', function (Blueprint $table) {
+        Schema::create('annee_scolaires', function (Blueprint $table) {
             $table->id();
+            $table->string('libelle', 20);
+            $table->boolean('active')->default(false);
             $table->timestamps();
         });
+
     }
 
     /**
@@ -22,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('eleves');
+        Schema::dropIfExists('annee__scolaires');
     }
 };

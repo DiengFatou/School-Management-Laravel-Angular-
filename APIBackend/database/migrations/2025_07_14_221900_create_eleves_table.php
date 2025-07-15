@@ -11,10 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('enseignants', function (Blueprint $table) {
+        Schema::create('eleves', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
-            $table->string('nom_complet', 100);
+            $table->string('nom', 100);
+            $table->string('prenom', 100);
+            $table->date('date_naissance')->nullable();
+            $table->foreignId('classe_id')->nullable()->constrained('classes')->onDelete('set null');
+            $table->foreignId('parent_id')->nullable()->constrained('parent_models')->onDelete('set null');
+            $table->boolean('visible')->default(true);
             $table->timestamps();
         });
 
@@ -25,6 +30,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('enseignants');
+        Schema::dropIfExists('eleves');
     }
 };
