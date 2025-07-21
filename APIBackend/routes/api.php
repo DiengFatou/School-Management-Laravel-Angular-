@@ -22,3 +22,15 @@ Route::apiResource('log-connexions', LogConnexionController::class);
 
 // Routes pour les fichiers
 Route::apiResource('fichiers', FichierController::class);
+
+// Routes pour les élèves
+Route::apiResource('eleves', EleveController::class);
+
+// Routes pour les classes
+Route::apiResource('classes', ClasseController::class);
+
+// Routes pour les enseignants
+Route::apiResource('enseignants', EnseignantController::class);
+
+// Routes pour les parents
+Route::apiResource('parents', ParentModelController::class);
