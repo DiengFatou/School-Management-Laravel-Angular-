@@ -68,6 +68,6 @@ class Note extends Model
      */
     public function anneeScolaire()
     {
-        return $this->belongsTo(Annee_Scolaires::class);
+        return $this->belongsTo(AnneeScolaire::class);
     }
 }
