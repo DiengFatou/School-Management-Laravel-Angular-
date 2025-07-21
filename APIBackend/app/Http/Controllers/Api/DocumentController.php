@@ -3,47 +3,72 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Document;
 use Illuminate\Http\Request;
 
 class DocumentController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Afficher la liste des documents.
      */
     public function index()
     {
-        //
+        return Document::with(['eleve', 'fichier'])->get();
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Enregistrer un nouveau document.
      */
     public function store(Request $request)
     {
-        //
+        $validated = $request->validate([
+            'eleve_id' => 'required|exists:eleves,id',
+            'type_document' => 'required|string|max:100',
+            'fichier_id' => 'required|exists:fichiers,id',
+            'date_upload' => 'required|date',
+        ]);
+
+        $document = Document::create($validated);
+
+        return response()->json($document, 201);
     }
 
     /**
-     * Display the specified resource.
+     * Afficher un document spécifique.
      */
-    public function show(string $id)
+    public function show($id)
     {
-        //
+        $document = Document::with(['eleve', 'fichier'])->findOrFail($id);
+        return response()->json($document);
     }
 
     /**
-     * Update the specified resource in storage.
+     * Mettre à jour un document existant.
      */
-    public function update(Request $request, string $id)
+    public function update(Request $request, $id)
     {
-        //
+        $document = Document::findOrFail($id);
+
+        $validated = $request->validate([
+            'eleve_id' => 'sometimes|exists:eleves,id',
+            'type_document' => 'sometimes|string|max:100',
+            'fichier_id' => 'sometimes|exists:fichiers,id',
+            'date_upload' => 'sometimes|date',
+        ]);
+
+        $document->update($validated);
+
+        return response()->json($document);
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Supprimer un document.
      */
-    public function destroy(string $id)
+    public function destroy($id)
     {
-        //
+        $document = Document::findOrFail($id);
+        $document->delete();
+
+        return response()->json(null, 204);
     }
 }
