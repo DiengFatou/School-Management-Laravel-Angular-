@@ -17,7 +17,7 @@ return new class extends Migration
             $table->foreignId('matiere_id')->constrained('matieres')->onDelete('cascade');
             $table->foreignId('enseignant_id')->constrained('enseignants')->onDelete('cascade');
             $table->string('trimestre', 20); 
-            $table->foreignId('annee_scolaire_id')->constrained('annees_scolaires')->onDelete('cascade'); 
+            $table->foreignId('annee_scolaire_id')->constrained('annee_scolaires')->onDelete('cascade'); 
             $table->decimal('note', 5, 2);
             $table->timestamps();
         });

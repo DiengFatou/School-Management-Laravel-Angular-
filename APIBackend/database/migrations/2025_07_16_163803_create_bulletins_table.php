@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('eleve_id')->constrained('eleves')->onDelete('cascade');
             $table->string('trimestre', 20);
-            $table->foreignId('annee_scolaire_id')->constrained('annees_scolaires')->onDelete('cascade');
+            $table->foreignId('annee_scolaire_id')->constrained('annee_scolaires')->onDelete('cascade');
             $table->string('pdf_path', 255)->nullable(); 
             $table->decimal('moyenne_generale', 5, 2)->nullable();
             $table->string('mention', 50)->nullable();
