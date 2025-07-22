@@ -57,8 +57,7 @@ class AnneeScolaireController extends Controller
                 'required',
                 'string',
                 'max:20',
-                Rule::unique('annee_scolaires', 'libelle')->ignore($anneeScolaire->id), 
-            ],
+                 ],
             'active' => 'boolean',
         ]);
 
