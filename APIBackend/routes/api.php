@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\LogConnexionController;
 use App\Http\Controllers\Api\FichierController;
 use App\Http\Controllers\Api\ParentModelController;
+use App\Http\Controllers\Api\UserController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -47,3 +48,4 @@ Route::apiResource('annee-scolaires', AnneeScolaireController::class);
 Route::apiResource('enseignements', EnseignantController::class);
 Route::apiResource('matieres', MatiereController::class);
 Route::apiResource('bulletins', BulletinController::class);
+Route::apiResource('users', UserController::class);
