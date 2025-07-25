@@ -1,18 +1,16 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { EleveComponent } from './eleve';
 
-import { Eleve } from './eleve';
-
-describe('Eleve', () => {
-  let component: Eleve;
-  let fixture: ComponentFixture<Eleve>;
+describe('EleveComponent', () => {
+  let component: EleveComponent;
+  let fixture: ComponentFixture<EleveComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [Eleve]
-    })
-    .compileComponents();
+      imports: [EleveComponent]
+    }).compileComponents();
 
-    fixture = TestBed.createComponent(Eleve);
+    fixture = TestBed.createComponent(EleveComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

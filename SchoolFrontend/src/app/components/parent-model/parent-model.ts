@@ -1,11 +1,13 @@
 import { Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-parent-model',
-  imports: [],
+  standalone: true,
+  imports: [CommonModule],
   templateUrl: './parent-model.html',
-  styleUrl: './parent-model.css'
+  styleUrls: ['./parent-model.css']
 })
-export class ParentModel {
-
+export class ParentModelComponent {
+ 
 }
