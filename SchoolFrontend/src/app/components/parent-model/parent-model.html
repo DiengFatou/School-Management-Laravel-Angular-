@@ -1,1 +1,17 @@
-<p>parent-model works!</p>
+<h2>Liste des Parents</h2>
+<table>
+  <thead>
+    <tr>
+      <th>Téléphone</th>
+      <th>Adresse</th>
+      <th>User ID</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let parent of parents">
+      <td>{{ parent.telephone }}</td>
+      <td>{{ parent.adresse }}</td>
+      <td>{{ parent.user_id }}</td>
+    </tr>
+  </tbody>
+</table>

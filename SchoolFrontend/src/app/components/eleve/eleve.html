@@ -1,1 +1,23 @@
-<p>eleve works!</p>
+<h2>Liste des Élèves</h2>
+<table>
+  <thead>
+    <tr>
+      <th>Nom</th>
+      <th>Prénom</th>
+      <th>Date de Naissance</th>
+      <th>Classe ID</th>
+      <th>Parent ID</th>
+      <th>Visible</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let eleve of eleves">
+      <td>{{ eleve.nom }}</td>
+      <td>{{ eleve.prenom }}</td>
+      <td>{{ eleve.date_naissance | date }}</td>
+      <td>{{ eleve.classe_id }}</td>
+      <td>{{ eleve.parent_id }}</td>
+      <td>{{ eleve.visible ? 'Oui' : 'Non' }}</td>
+    </tr>
+  </tbody>
+</table>

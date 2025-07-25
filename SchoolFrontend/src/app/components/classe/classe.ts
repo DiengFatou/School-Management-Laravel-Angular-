@@ -1,11 +1,23 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { ClasseService } from '../../Service/classe.service';
+import { Classe } from '../../Models/classe.model';
 
 @Component({
   selector: 'app-classe',
-  imports: [],
+  standalone: true,
+  imports: [CommonModule],
   templateUrl: './classe.html',
-  styleUrl: './classe.css'
+  styleUrls: ['./classe.css']
 })
-export class ClasseComponent {
+export class ClasseComponent implements OnInit {
+  classes: Classe[] = [];
 
+  constructor(private classeService: ClasseService) {}
+
+  ngOnInit(): void {
+    this.classeService.getAll().subscribe(data => {
+      this.classes = data;
+    });
+  }
 }

@@ -1,1 +1,15 @@
-<p>enseignant works!</p>
+<h2>Liste des Enseignants</h2>
+<table>
+  <thead>
+    <tr>
+      <th>Nom Complet</th>
+      <th>User ID</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let enseignant of enseignants">
+      <td>{{ enseignant.nom_complet }}</td>
+      <td>{{ enseignant.user_id }}</td>
+    </tr>
+  </tbody>
+</table>

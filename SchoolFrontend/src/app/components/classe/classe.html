@@ -1,1 +1,17 @@
-<p>classe works!</p>
+<h2>Liste des Classes</h2>
+<table>
+  <thead>
+    <tr>
+      <th>Nom</th>
+      <th>Niveau</th>
+      <th>Année Scolaire ID</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let classe of classes">
+      <td>{{ classe.nom }}</td>
+      <td>{{ classe.niveau }}</td>
+      <td>{{ classe.annee_scolaire_id }}</td>
+    </tr>
+  </tbody>
+</table>
