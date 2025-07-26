@@ -7,16 +7,12 @@ import { Observable } from 'rxjs';
   providedIn: 'root'
 })
 export class EnseignantService {
-  private apiUrl = 'http://localhost:8000/api/enseignants'; 
+  private apiUrl = 'http://127.0.0.1:8000/api/enseignants';
 
   constructor(private http: HttpClient) {}
 
   getAll(): Observable<Enseignant[]> {
     return this.http.get<Enseignant[]>(this.apiUrl);
-  }
-
-  getById(id: number): Observable<Enseignant> {
-    return this.http.get<Enseignant>(`${this.apiUrl}/${id}`);
   }
 
   create(enseignant: Enseignant): Observable<Enseignant> {
@@ -27,7 +23,7 @@ export class EnseignantService {
     return this.http.put<Enseignant>(`${this.apiUrl}/${id}`, enseignant);
   }
 
-  delete(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/${id}`);
+  delete(id: number): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/${id}`);
   }
 }

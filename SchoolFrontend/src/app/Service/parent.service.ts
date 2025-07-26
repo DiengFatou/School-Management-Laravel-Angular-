@@ -1,11 +1,14 @@
+// src/app/Service/parent.service.ts
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Parent } from '../Models/parent.model';
 import { Observable } from 'rxjs';
+import { Parent } from '../Models/parent.model';
 
-@Injectable({ providedIn: 'root' })
+@Injectable({
+  providedIn: 'root'
+})
 export class ParentService {
-  private apiUrl = 'http://localhost:8000/api/parents';
+  private apiUrl = 'http://localhost:8000/api/parents'; // adapte selon ton API
 
   constructor(private http: HttpClient) {}
 
@@ -21,7 +24,7 @@ export class ParentService {
     return this.http.put<Parent>(`${this.apiUrl}/${id}`, parent);
   }
 
-  delete(id: number): Observable<any> {
-    return this.http.delete(`${this.apiUrl}/${id}`);
+  delete(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
 }

@@ -1,0 +1,41 @@
+/* src/app/components/parent-model/parent-model.css */
+.container {
+  max-width: 800px;
+  margin: auto;
+  padding: 20px;
+}
+
+input {
+  margin: 5px 5px 10px 0;
+  padding: 8px;
+  width: 200px;
+}
+
+form button {
+  margin-right: 10px;
+  padding: 8px 12px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+table th,
+table td {
+  border: 1px solid #ccc;
+  padding: 10px;
+}
+
+.pagination button {
+  margin: 5px 3px;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+
+.pagination button.active {
+  font-weight: bold;
+  background-color: #007bff;
+  color: white;
+}

@@ -1,17 +1,49 @@
-<h2>Liste des Classes</h2>
-<table>
-  <thead>
-    <tr>
-      <th>Nom</th>
-      <th>Niveau</th>
-      <th>Année Scolaire ID</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr *ngFor="let classe of classes">
-      <td>{{ classe.nom }}</td>
-      <td>{{ classe.niveau }}</td>
-      <td>{{ classe.annee_scolaire_id }}</td>
-    </tr>
-  </tbody>
-</table>
+<div class="classe-form">
+  <h2>Gestion des Classes</h2>
+  <input
+    type="text"
+    [(ngModel)]="searchTerm"
+    (input)="changePage(1)"
+    placeholder="Rechercher par nom ou niveau"
+  />
+
+  <form (ngSubmit)="saveClasse()">
+    <input type="text" [(ngModel)]="classeForm.nom" name="nom" placeholder="Nom" required />
+    <input type="text" [(ngModel)]="classeForm.niveau" name="niveau" placeholder="Niveau" required />
+    <input
+      type="number"
+      [(ngModel)]="classeForm.annee_scolaire_id"
+      name="annee_scolaire_id"
+      placeholder="Année scolaire ID"
+      required
+    />
+
+    <button type="submit">{{ classeForm.id ? 'Modifier' : 'Ajouter' }}</button>
+    <button type="button" (click)="resetForm()">Annuler</button>
+  </form>
+</div>
+
+<div class="classe-list">
+  <h3>Liste des classes</h3>
+  <ul>
+    <li *ngFor="let classe of paginatedClasses">
+      {{ classe.nom }} - {{ classe.niveau }} - Année ID: {{ classe.annee_scolaire_id }}
+      <button (click)="editClasse(classe)">Modifier</button>
+      <button (click)="deleteClasse(classe.id)">Supprimer</button>
+    </li>
+  </ul>
+
+  <div class="pagination" *ngIf="totalPages.length > 1">
+    <button (click)="changePage(currentPage - 1)" [disabled]="currentPage === 1">Précédent</button>
+
+    <button
+      *ngFor="let page of totalPages"
+      (click)="changePage(page)"
+      [class.active]="page === currentPage"
+    >
+      {{ page }}
+    </button>
+
+    <button (click)="changePage(currentPage + 1)" [disabled]="currentPage === totalPages.length">Suivant</button>
+  </div>
+</div>

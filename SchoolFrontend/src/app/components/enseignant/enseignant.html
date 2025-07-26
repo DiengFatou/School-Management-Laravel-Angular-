@@ -1,15 +1,42 @@
-<h2>Liste des Enseignants</h2>
-<table>
-  <thead>
-    <tr>
-      <th>Nom Complet</th>
-      <th>User ID</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr *ngFor="let enseignant of enseignants">
-      <td>{{ enseignant.nom_complet }}</td>
-      <td>{{ enseignant.user_id }}</td>
-    </tr>
-  </tbody>
-</table>
+<div class="container">
+  <h2>Gestion des Enseignants</h2>
+
+  <div class="search-box">
+    <input type="text" [(ngModel)]="searchTerm" placeholder="🔍 Rechercher par nom..." (input)="search()" />
+  </div>
+
+  <form (ngSubmit)="save()">
+    <input type="text" [(ngModel)]="newEnseignant.nom_complet" name="nom_complet" placeholder="Nom complet" required />
+    <input type="number" [(ngModel)]="newEnseignant.user_id" name="user_id" placeholder="User ID" required />
+    <button type="submit">{{ isEditing ? 'Modifier' : 'Ajouter' }}</button>
+    <button type="button" (click)="resetForm()">Annuler</button>
+  </form>
+
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Nom complet</th>
+        <th>User ID</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let enseignant of paginatedEnseignants">
+        <td>{{ enseignant.id }}</td>
+        <td>{{ enseignant.nom_complet }}</td>
+        <td>{{ enseignant.user_id }}</td>
+        <td>
+          <button (click)="edit(enseignant)">✏️</button>
+          <button (click)="delete(enseignant.id)">🗑️</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="pagination">
+    <button (click)="changePage(-1)" [disabled]="currentPage === 1">Précédent</button>
+    <span>Page {{ currentPage }} / {{ totalPages() }}</span>
+    <button (click)="changePage(1)" [disabled]="currentPage === totalPages()">Suivant</button>
+  </div>
+</div>

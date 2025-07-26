@@ -1,8 +1,11 @@
-<nav>
-  <a routerLink="/parents">Parents</a>
-  <a routerLink="/eleves">Élèves</a>
-  <a routerLink="/classes">Classes</a>
-  <a routerLink="/enseignants">Enseignants</a>
-</nav>
-
+<header>
+  <h1>{{ title }}</h1>
+  <nav>
+    <a routerLink="/parents">Parents</a> |
+    <a routerLink="/eleves">Élèves</a> |
+    <a routerLink="/classes">Classes</a> |
+    <a routerLink="/enseignants">Enseignants</a>
+  </nav>
+</header>
+<hr/>
 <router-outlet></router-outlet>

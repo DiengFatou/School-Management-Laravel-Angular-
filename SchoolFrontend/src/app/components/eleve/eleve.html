@@ -1,23 +1,60 @@
-<h2>Liste des Élèves</h2>
-<table>
-  <thead>
-    <tr>
-      <th>Nom</th>
-      <th>Prénom</th>
-      <th>Date de Naissance</th>
-      <th>Classe ID</th>
-      <th>Parent ID</th>
-      <th>Visible</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr *ngFor="let eleve of eleves">
-      <td>{{ eleve.nom }}</td>
-      <td>{{ eleve.prenom }}</td>
-      <td>{{ eleve.date_naissance | date }}</td>
-      <td>{{ eleve.classe_id }}</td>
-      <td>{{ eleve.parent_id }}</td>
-      <td>{{ eleve.visible ? 'Oui' : 'Non' }}</td>
-    </tr>
-  </tbody>
-</table>
+<div class="container">
+  <h2>Gestion des Élèves</h2>
+
+  <div class="search-bar">
+    <input type="text" [(ngModel)]="searchTerm" placeholder="🔍 Rechercher par nom/prénom..." (input)="search()" />
+  </div>
+
+  <form (ngSubmit)="save()" class="form-eleve">
+    <input type="number" [(ngModel)]="eleveForm.user_id" name="user_id" placeholder="User ID" required />
+    <input type="text" [(ngModel)]="eleveForm.nom" name="nom" placeholder="Nom" required />
+    <input type="text" [(ngModel)]="eleveForm.prenom" name="prenom" placeholder="Prénom" required />
+    <input type="date" [(ngModel)]="eleveForm.date_naissance" name="date_naissance" required />
+    <input type="number" [(ngModel)]="eleveForm.classe_id" name="classe_id" placeholder="Classe ID" required />
+    <input type="number" [(ngModel)]="eleveForm.parent_id" name="parent_id" placeholder="Parent ID" required />
+    <label>
+      Visible : 
+      <input type="checkbox" [(ngModel)]="eleveForm.visible" name="visible" />
+    </label>
+    <button type="submit">{{ isEditing ? 'Modifier' : 'Ajouter' }}</button>
+    <button type="button" (click)="resetForm()">Annuler</button>
+  </form>
+
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>User ID</th>
+        <th>Nom</th>
+        <th>Prénom</th>
+        <th>Date de naissance</th>
+        <th>Classe ID</th>
+        <th>Parent ID</th>
+        <th>Visible</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let eleve of paginatedEleves">
+        <td>{{ eleve.id }}</td>
+        <td>{{ eleve.user_id }}</td>
+        <td>{{ eleve.nom }}</td>
+        <td>{{ eleve.prenom }}</td>
+        <td>{{ eleve.date_naissance | date:'yyyy-MM-dd' }}</td>
+        <td>{{ eleve.classe_id }}</td>
+        <td>{{ eleve.parent_id }}</td>
+        <td>{{ eleve.visible ? 'Oui' : 'Non' }}</td>
+        <td>
+          <button (click)="edit(eleve)">✏️</button>
+          <button (click)="delete(eleve.id)">🗑️</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="pagination">
+    <button (click)="changePage(-1)" [disabled]="currentPage === 1">Précédent</button>
+    <span>Page {{ currentPage }} / {{ totalPages() }}</span>
+    <button (click)="changePage(1)" [disabled]="currentPage === totalPages()">Suivant</button>
+  </div>
+</div>

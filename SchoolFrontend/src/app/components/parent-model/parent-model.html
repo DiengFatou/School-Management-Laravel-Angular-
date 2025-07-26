@@ -1,17 +1,68 @@
-<h2>Liste des Parents</h2>
-<table>
-  <thead>
-    <tr>
-      <th>Téléphone</th>
-      <th>Adresse</th>
-      <th>User ID</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr *ngFor="let parent of parents">
-      <td>{{ parent.telephone }}</td>
-      <td>{{ parent.adresse }}</td>
-      <td>{{ parent.user_id }}</td>
-    </tr>
-  </tbody>
-</table>
+<!-- src/app/components/parent-model/parent-model.html -->
+<div class="container">
+  <h2>Gestion des Parents</h2>
+
+  <input
+    type="text"
+    placeholder="Rechercher par téléphone ou adresse..."
+    [(ngModel)]="searchTerm"
+  />
+
+  <form (ngSubmit)="saveParent()" class="form">
+    <input
+      type="number"
+      [(ngModel)]="parentForm.user_id"
+      name="user_id"
+      placeholder="User ID"
+      required
+    />
+    <input
+      type="text"
+      [(ngModel)]="parentForm.telephone"
+      name="telephone"
+      placeholder="Téléphone"
+      required
+    />
+    <input
+      type="text"
+      [(ngModel)]="parentForm.adresse"
+      name="adresse"
+      placeholder="Adresse"
+      required
+    />
+    <button type="submit">{{ parentForm.id ? 'Modifier' : 'Ajouter' }}</button>
+    <button type="button" (click)="resetForm()">Annuler</button>
+  </form>
+
+  <table>
+    <thead>
+      <tr>
+        <th>User ID</th>
+        <th>Téléphone</th>
+        <th>Adresse</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let parent of paginatedParents">
+        <td>{{ parent.user_id }}</td>
+        <td>{{ parent.telephone }}</td>
+        <td>{{ parent.adresse }}</td>
+        <td>
+          <button (click)="editParent(parent)">✏️</button>
+          <button (click)="deleteParent(parent.id)">🗑️</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="pagination">
+    <button
+      *ngFor="let page of totalPages"
+      (click)="changePage(page)"
+      [class.active]="page === currentPage"
+    >
+      {{ page }}
+    </button>
+  </div>
+</div>
