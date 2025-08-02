@@ -1,68 +1,138 @@
-<!-- src/app/components/parent-model/parent-model.html -->
-<div class="container">
-  <h2>Gestion des Parents</h2>
+<div class="container-fluid p-4">
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="text-primary fw-bold"><i class="fas fa-users me-2"></i>Gestion des Parents</h2>
+    <span class="badge bg-info fs-6">{{ parents.length }} parent(s)</span>
+  </div>
 
-  <input
-    type="text"
-    placeholder="Rechercher par téléphone ou adresse..."
-    [(ngModel)]="searchTerm"
-  />
+  <!-- Search & Add -->
+  <div class="row mb-4">
+    <div class="col-md-6">
+      <div class="input-group">
+        <span class="input-group-text"><i class="fas fa-search"></i></span>
+        <input type="text" class="form-control" [(ngModel)]="searchTerm" 
+               placeholder="Rechercher par téléphone ou adresse..." (input)="search()">
+      </div>
+    </div>
+    <div class="col-md-6">
+      <button class="btn btn-info" (click)="toggleForm()">
+        <i class="fas fa-user-plus me-1"></i>{{ showForm ? 'Annuler' : 'Nouveau Parent' }}
+      </button>
+    </div>
+  </div>
 
-  <form (ngSubmit)="saveParent()" class="form">
-    <input
-      type="number"
-      [(ngModel)]="parentForm.user_id"
-      name="user_id"
-      placeholder="User ID"
-      required
-    />
-    <input
-      type="text"
-      [(ngModel)]="parentForm.telephone"
-      name="telephone"
-      placeholder="Téléphone"
-      required
-    />
-    <input
-      type="text"
-      [(ngModel)]="parentForm.adresse"
-      name="adresse"
-      placeholder="Adresse"
-      required
-    />
-    <button type="submit">{{ parentForm.id ? 'Modifier' : 'Ajouter' }}</button>
-    <button type="button" (click)="resetForm()">Annuler</button>
-  </form>
+  <!-- Table -->
+  <div class="card shadow-sm">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="table-dark">
+            <tr>
+              <th><i class="fas fa-hashtag me-1"></i>ID</th>
+              <th><i class="fas fa-user me-1"></i>Parent</th>
+              <th><i class="fas fa-phone me-1"></i>Téléphone</th>
+              <th><i class="fas fa-map-marker-alt me-1"></i>Adresse</th>
+              <th class="text-center"><i class="fas fa-cogs me-1"></i>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let parent of paginatedParents; let i = index" 
+                [class.table-warning]="parent.id === parentForm.id">
+              <td class="fw-bold">{{ parent.id }}</td>
+              <td>
+                <div>
+                  <div class="fw-bold">Parent {{ parent.id }}</div>
+                  <small class="text-muted">ID: {{ parent.user_id }}</small>
+                </div>
+              </td>
+              <td>
+                <span class="badge bg-success">{{ parent.telephone }}</span>
+              </td>
+              <td>
+                <span class="text-truncate" style="max-width: 200px;" [title]="parent.adresse">
+                  {{ parent.adresse }}
+                </span>
+              </td>
+              <td class="text-center">
+                <div class="btn-group" role="group">
+                  <button class="btn btn-outline-primary btn-sm" (click)="edit(parent)">
+                    <i class="fas fa-edit me-1"></i>Modifier
+                  </button>
+                  <button class="btn btn-outline-danger btn-sm" (click)="delete(parent.id)">
+                    <i class="fas fa-trash me-1"></i>Supprimer
+                  </button>
+                </div>
+              </td>
+            </tr>
+            <tr *ngIf="paginatedParents.length === 0">
+              <td colspan="5" class="text-center text-muted py-4">
+                <i class="fas fa-users fa-2x mb-2"></i>
+                <p>Aucun parent trouvé</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
 
-  <table>
-    <thead>
-      <tr>
-        <th>User ID</th>
-        <th>Téléphone</th>
-        <th>Adresse</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr *ngFor="let parent of paginatedParents">
-        <td>{{ parent.user_id }}</td>
-        <td>{{ parent.telephone }}</td>
-        <td>{{ parent.adresse }}</td>
-        <td>
-          <button (click)="editParent(parent)">✏️</button>
-          <button (click)="deleteParent(parent.id)">🗑️</button>
-        </td>
-      </tr>
-    </tbody>
-  </table>
+  <!-- Pagination -->
+  <nav class="mt-4" *ngIf="totalPages() > 1">
+    <ul class="pagination justify-content-center">
+      <li class="page-item" [class.disabled]="currentPage === 1">
+        <button class="page-link" (click)="changePage(-1)">
+          <i class="fas fa-chevron-left"></i> Précédent
+        </button>
+      </li>
+      <li class="page-item active">
+        <span class="page-link">{{ currentPage }} / {{ totalPages() }}</span>
+      </li>
+      <li class="page-item" [class.disabled]="currentPage === totalPages()">
+        <button class="page-link" (click)="changePage(1)">
+          Suivant <i class="fas fa-chevron-right"></i>
+        </button>
+      </li>
+    </ul>
+  </nav>
+</div>
 
-  <div class="pagination">
-    <button
-      *ngFor="let page of totalPages"
-      (click)="changePage(page)"
-      [class.active]="page === currentPage"
-    >
-      {{ page }}
-    </button>
+<!-- Form -->
+<div class="card mt-4" *ngIf="showForm || isEditing">
+  <div class="card-header bg-info text-white">
+    <h5 class="mb-0">
+      <i class="fas fa-user-friends me-2"></i>
+      {{ isEditing ? 'Modifier' : 'Ajouter' }} un Parent
+    </h5>
+  </div>
+  <div class="card-body">
+    <form (ngSubmit)="save()">
+      <div class="row">
+        <div class="col-md-4 mb-3">
+          <label class="form-label fw-bold">User ID</label>
+          <input type="number" class="form-control" [(ngModel)]="parentForm.user_id" 
+                 name="user_id" placeholder="123" required>
+        </div>
+        <div class="col-md-8 mb-3">
+          <label class="form-label fw-bold">Téléphone</label>
+          <input type="tel" class="form-control" [(ngModel)]="parentForm.telephone" 
+                 name="telephone" placeholder="Ex: +33 1 23 45 67 89" required>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-12 mb-3">
+          <label class="form-label fw-bold">Adresse Complète</label>
+          <textarea class="form-control" [(ngModel)]="parentForm.adresse" 
+                    name="adresse" rows="3" placeholder="123 Rue de la Paix, 75001 Paris" required></textarea>
+        </div>
+      </div>
+      <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-info">
+          <i class="fas fa-save me-1"></i>{{ isEditing ? 'Modifier' : 'Ajouter' }}
+        </button>
+        <button type="button" class="btn btn-secondary" (click)="resetForm()">
+          <i class="fas fa-times me-1"></i>Annuler
+        </button>
+      </div>
+    </form>
   </div>
 </div>

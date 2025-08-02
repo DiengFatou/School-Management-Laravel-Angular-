@@ -1,49 +1,132 @@
-<div class="classe-form">
-  <h2>Gestion des Classes</h2>
-  <input
-    type="text"
-    [(ngModel)]="searchTerm"
-    (input)="changePage(1)"
-    placeholder="Rechercher par nom ou niveau"
-  />
+<div class="container-fluid p-4">
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="text-primary fw-bold"><i class="fas fa-school me-2"></i>Gestion des Classes</h2>
+    <span class="badge bg-warning fs-6">{{ classes.length }} classe(s)</span>
+  </div>
 
-  <form (ngSubmit)="saveClasse()">
-    <input type="text" [(ngModel)]="classeForm.nom" name="nom" placeholder="Nom" required />
-    <input type="text" [(ngModel)]="classeForm.niveau" name="niveau" placeholder="Niveau" required />
-    <input
-      type="number"
-      [(ngModel)]="classeForm.annee_scolaire_id"
-      name="annee_scolaire_id"
-      placeholder="Année scolaire ID"
-      required
-    />
+  <!-- Search & Add -->
+  <div class="row mb-4">
+    <div class="col-md-6">
+      <div class="input-group">
+        <span class="input-group-text"><i class="fas fa-search"></i></span>
+        <input type="text" class="form-control" [(ngModel)]="searchTerm" 
+               placeholder="Rechercher par nom ou niveau..." (input)="changePage(1)">
+      </div>
+    </div>
+    <div class="col-md-6">
+      <button class="btn btn-warning" (click)="toggleForm()">
+        <i class="fas fa-plus me-1"></i>{{ showForm ? 'Annuler' : 'Nouvelle Classe' }}
+      </button>
+    </div>
+  </div>
 
-    <button type="submit">{{ classeForm.id ? 'Modifier' : 'Ajouter' }}</button>
-    <button type="button" (click)="resetForm()">Annuler</button>
-  </form>
+  <!-- Table -->
+  <div class="card shadow-sm">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="table-dark">
+            <tr>
+              <th><i class="fas fa-hashtag me-1"></i>ID</th>
+              <th><i class="fas fa-school me-1"></i>Classe</th>
+              <th><i class="fas fa-layer-group me-1"></i>Niveau</th>
+              <th><i class="fas fa-calendar-alt me-1"></i>Année</th>
+              <th class="text-center"><i class="fas fa-cogs me-1"></i>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let classe of paginatedClasses; let i = index" 
+                [class.table-warning]="classe.id === classeForm.id">
+              <td class="fw-bold">{{ classe.id }}</td>
+              <td>
+                <div>
+                  <div class="fw-bold">{{ classe.nom }}</div>
+                  <small class="text-muted">Classe</small>
+                </div>
+              </td>
+              <td><span class="badge bg-primary">{{ classe.niveau }}</span></td>
+              <td><span class="badge bg-info">{{ classe.annee_scolaire_id }}</span></td>
+              <td class="text-center">
+                <div class="btn-group" role="group">
+                  <button class="btn btn-outline-warning btn-sm" (click)="editClasse(classe)">
+                    <i class="fas fa-edit me-1"></i>Modifier
+                  </button>
+                  <button class="btn btn-outline-danger btn-sm" (click)="deleteClasse(classe.id)">
+                    <i class="fas fa-trash me-1"></i>Supprimer
+                  </button>
+                </div>
+              </td>
+            </tr>
+            <tr *ngIf="paginatedClasses.length === 0">
+              <td colspan="5" class="text-center text-muted py-4">
+                <i class="fas fa-school fa-2x mb-2"></i>
+                <p>Aucune classe trouvée</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  <nav class="mt-4" *ngIf="totalPages.length > 1">
+    <ul class="pagination justify-content-center">
+      <li class="page-item" [class.disabled]="currentPage === 1">
+        <button class="page-link" (click)="changePage(currentPage - 1)">
+          <i class="fas fa-chevron-left"></i> Précédent
+        </button>
+      </li>
+      <li class="page-item active">
+        <span class="page-link">{{ currentPage }} / {{ totalPages.length }}</span>
+      </li>
+      <li class="page-item" [class.disabled]="currentPage === totalPages.length">
+        <button class="page-link" (click)="changePage(currentPage + 1)">
+          Suivant <i class="fas fa-chevron-right"></i>
+        </button>
+      </li>
+    </ul>
+  </nav>
 </div>
 
-<div class="classe-list">
-  <h3>Liste des classes</h3>
-  <ul>
-    <li *ngFor="let classe of paginatedClasses">
-      {{ classe.nom }} - {{ classe.niveau }} - Année ID: {{ classe.annee_scolaire_id }}
-      <button (click)="editClasse(classe)">Modifier</button>
-      <button (click)="deleteClasse(classe.id)">Supprimer</button>
-    </li>
-  </ul>
-
-  <div class="pagination" *ngIf="totalPages.length > 1">
-    <button (click)="changePage(currentPage - 1)" [disabled]="currentPage === 1">Précédent</button>
-
-    <button
-      *ngFor="let page of totalPages"
-      (click)="changePage(page)"
-      [class.active]="page === currentPage"
-    >
-      {{ page }}
-    </button>
-
-    <button (click)="changePage(currentPage + 1)" [disabled]="currentPage === totalPages.length">Suivant</button>
+<!-- Form -->
+<div class="card mt-4" *ngIf="showForm || classeForm.id">
+  <div class="card-header bg-warning text-dark">
+    <h5 class="mb-0">
+      <i class="fas fa-school me-2"></i>
+      {{ classeForm.id ? 'Modifier' : 'Ajouter' }} une Classe
+    </h5>
+  </div>
+  <div class="card-body">
+    <form (ngSubmit)="saveClasse()">
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label class="form-label fw-bold">Nom de la Classe</label>
+          <input type="text" class="form-control" [(ngModel)]="classeForm.nom" 
+                 name="nom" placeholder="Ex: 6ème A, CM2 B..." required>
+        </div>
+        <div class="col-md-6 mb-3">
+          <label class="form-label fw-bold">Niveau</label>
+          <input type="text" class="form-control" [(ngModel)]="classeForm.niveau" 
+                 name="niveau" placeholder="Ex: 6ème, CM2, Terminale..." required>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label class="form-label fw-bold">Année Scolaire ID</label>
+          <input type="number" class="form-control" [(ngModel)]="classeForm.annee_scolaire_id" 
+                 name="annee_scolaire_id" placeholder="Ex: 2024" required>
+        </div>
+      </div>
+      <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-warning">
+          <i class="fas fa-save me-1"></i>{{ classeForm.id ? 'Modifier' : 'Ajouter' }}
+        </button>
+        <button type="button" class="btn btn-secondary" (click)="resetForm()">
+          <i class="fas fa-times me-1"></i>Annuler
+        </button>
+      </div>
+    </form>
   </div>
 </div>
