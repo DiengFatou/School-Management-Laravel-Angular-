@@ -35,7 +35,7 @@ export class BulletinService {
       );
   }
 
-  // Mettre a jour un bulletin
+  // Mettre  jour un bulletin
   updateBulletin(id: any, data: Bulletin): Observable<any> {
     const API_URL = `${this.REST_API}/${id}`;
     return this.httpClient.put(API_URL, data, { headers: this.httpHeaders })
