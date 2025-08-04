@@ -1,0 +1,165 @@
+<div class="admin-eleves-container">
+  <!-- Header -->
+  <div class="page-header">
+    <h1><i class="fas fa-user-graduate"></i> Gestion des Élèves</h1>
+    <button class="btn-add" (click)="openAddForm()">
+      <i class="fas fa-plus"></i> Ajouter un élève
+    </button>
+  </div>
+
+  <!-- Messages -->
+  <div class="messages">
+    <div *ngIf="errorMessage" class="error-message">
+      <i class="fas fa-exclamation-triangle"></i> {{ errorMessage }}
+    </div>
+    <div *ngIf="successMessage" class="success-message">
+      <i class="fas fa-check-circle"></i> {{ successMessage }}
+    </div>
+  </div>
+
+  <!-- Formulaire Modal -->
+  <div *ngIf="showModal" class="modal-overlay" (click)="cancelEdit()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ isEditing ? 'Modifier l\'élève' : 'Ajouter un élève' }}</h2>
+        <button class="btn-close" (click)="cancelEdit()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      
+      <form (ngSubmit)="onSubmit()" class="form">
+        <!-- Les informations de connexion sont générées automatiquement -->
+        <!-- Section Élève -->
+        <div class="form-section">
+          <h3>{{ isEditing ? 'Informations de l\'élève' : 'Informations personnelles' }}</h3>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label for="nom">Nom *</label>
+              <input type="text" id="nom" name="nom" [(ngModel)]="eleveForm.nom" required>
+            </div>
+            
+            <div class="form-group">
+              <label for="prenom">Prénom *</label>
+              <input type="text" id="prenom" name="prenom" [(ngModel)]="eleveForm.prenom" required>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label for="date_naissance">Date de naissance</label>
+            <input type="date" id="date_naissance" name="date_naissance" [(ngModel)]="eleveForm.date_naissance">
+          </div>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label for="classe_id">Classe</label>
+              <select id="classe_id" name="classe_id" [(ngModel)]="eleveForm.classe_id">
+                <option value="0">Sélectionner une classe</option>
+                <option *ngFor="let classe of classes" [value]="classe.id">{{ classe.nom }} - {{ classe.niveau }}</option>
+              </select>
+            </div>
+            
+            <div class="form-group">
+              <label for="parent_id">Parent</label>
+              <select id="parent_id" name="parent_id" [(ngModel)]="eleveForm.parent_id">
+                <option value="0">Sélectionner un parent</option>
+                <option *ngFor="let parent of parents" [value]="parent.id">
+                  {{ parent.user?.nom || 'Parent ' + parent.id }}
+                </option>
+              </select>
+            </div>
+          </div>
+          
+          <div class="form-group checkbox">
+            <label>
+              <input type="checkbox" [(ngModel)]="eleveForm.visible" name="visible">
+              Visible
+            </label>
+          </div>
+        </div>
+        
+        <div class="form-actions">
+          <button type="button" class="btn-cancel" (click)="cancelEdit()">Annuler</button>
+          <button type="submit" class="btn-submit" [disabled]="isLoading">
+            <span *ngIf="isLoading"><i class="fas fa-spinner fa-spin"></i> Chargement...</span>
+            <span *ngIf="!isLoading">{{ isEditing ? 'Modifier' : 'Ajouter' }}</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Liste des élèves -->
+  <div class="content">
+    <div *ngIf="isLoading" class="loading">
+      <i class="fas fa-spinner fa-spin"></i> Chargement des élèves...
+    </div>
+    
+    <div *ngIf="!isLoading && eleves.length === 0" class="empty-state">
+      <i class="fas fa-user-graduate"></i>
+      <h3>Aucun élève trouvé</h3>
+      <p>Commencez par ajouter votre premier élève.</p>
+    </div>
+    
+    <div *ngIf="!isLoading && eleves.length > 0" class="eleves-grid">
+      <div *ngFor="let eleve of eleves" class="eleve-card">
+        <div class="eleve-header">
+          <div class="eleve-avatar">
+            <i class="fas fa-user-graduate"></i>
+          </div>
+          <div class="eleve-title">
+            <h3>{{ eleve.prenom }} {{ eleve.nom }}</h3>
+            <span class="status" [class.visible]="eleve.visible">
+              {{ eleve.visible ? 'Actif' : 'Inactif' }}
+            </span>
+          </div>
+        </div>
+        
+        <div class="eleve-details">
+          <div class="detail-row">
+            <i class="fas fa-calendar"></i>
+            <span *ngIf="eleve.date_naissance">
+              {{ eleve.date_naissance | date:'dd/MM/yyyy' }} 
+              <span class="age">({{ calculateAge(eleve.date_naissance) }} ans)</span>
+            </span>
+            <span *ngIf="!eleve.date_naissance">Date de naissance non renseignée</span>
+          </div>
+          
+          <div class="detail-row">
+            <i class="fas fa-id-card"></i>
+            <span>ID Utilisateur: {{ eleve.user_id }}</span>
+          </div>
+          
+          <div class="detail-row" *ngIf="eleve.classe_id">
+            <i class="fas fa-chalkboard"></i>
+            <span>{{ getClasseName(eleve.classe_id) }}</span>
+          </div>
+          
+          <div class="detail-row" *ngIf="eleve.parent_id">
+            <i class="fas fa-users"></i>
+            <span>{{ getParentName(eleve.parent_id) }}</span>
+          </div>
+          
+          <div class="detail-row" *ngIf="!eleve.classe_id">
+            <i class="fas fa-exclamation-triangle"></i>
+            <span class="warning">Aucune classe assignée</span>
+          </div>
+          
+          <div class="detail-row" *ngIf="!eleve.parent_id">
+            <i class="fas fa-exclamation-triangle"></i>
+            <span class="warning">Aucun parent assigné</span>
+          </div>
+        </div>
+        
+        <div class="eleve-actions">
+          <button class="btn-edit" (click)="openEditForm(eleve)" title="Modifier">
+            <i class="fas fa-edit"></i>
+          </button>
+          <button class="btn-delete" (click)="deleteEleve(eleve.id!)" title="Supprimer">
+            <i class="fas fa-trash"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div> 

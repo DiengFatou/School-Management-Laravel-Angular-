@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Enseignant;
+use App\Models\Enseignement;
 
 class Matiere extends Model
 {
@@ -40,7 +42,16 @@ class Matiere extends Model
      */
     public function enseignements()
     {
-        return $this->hasMany(Enseignements::class);
+        return $this->hasMany(Enseignement::class);
+    }
+
+    /**
+     * Get the enseignants (professeurs) qui enseignent cette matière.
+     */
+    public function enseignants()
+    {
+        return $this->belongsToMany(Enseignant::class, 'enseignements', 'matiere_id', 'enseignant_id')
+                   ->withTimestamps();
     }
 
     // Ajoutez d'autres relations ici si d'autres tables référencent 'matieres'

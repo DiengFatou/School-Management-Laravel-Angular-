@@ -4,6 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Enseignement;
+use App\Models\Matiere;
+use App\Models\Classe;
 
 class Enseignant extends Model
 {
@@ -26,10 +29,30 @@ class Enseignant extends Model
     }
 
     /**
-     * (Optionnel) Relation : Un enseignant peut enseigner plusieurs classes
+     * Relation : Un enseignant peut avoir plusieurs enseignements
+     */
+    public function enseignements()
+    {
+        return $this->hasMany(Enseignement::class);
+    }
+
+    /**
+     * Relation : Un enseignant peut enseigner plusieurs matières via la table enseignements
+     */
+    public function matieres()
+    {
+        return $this->belongsToMany(Matiere::class, 'enseignements', 'enseignant_id', 'matiere_id')
+                    ->withPivot('classe_id')
+                    ->withTimestamps();
+    }
+
+    /**
+     * Relation : Un enseignant peut enseigner dans plusieurs classes via la table enseignements
      */
     public function classes()
     {
-        return $this->hasMany(Classe::class);
+        return $this->belongsToMany(Classe::class, 'enseignements', 'enseignant_id', 'classe_id')
+                    ->withPivot('matiere_id')
+                    ->withTimestamps();
     }
 }

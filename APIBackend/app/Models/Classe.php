@@ -15,6 +15,7 @@ class Classe extends Model
     protected $fillable = [
         'nom',
         'niveau',
+        'capacite',
         'annee_scolaire_id',
     ];
 

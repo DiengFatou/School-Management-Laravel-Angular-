@@ -13,7 +13,9 @@ class ParentModelController extends Controller
      */
     public function index()
     {
-        return response()->json(ParentModel::all(), 200);
+        // Charger les parents avec leurs utilisateurs associés
+        $parents = ParentModel::with('user:id,nom,prenom,email')->get();
+        return response()->json($parents, 200);
     }
 
     /**
@@ -37,7 +39,7 @@ class ParentModelController extends Controller
      */
     public function show(string $id)
     {
-        $parent = ParentModel::find($id);
+        $parent = ParentModel::with('user:id,nom,prenom,email')->find($id);
 
         if (!$parent) {
             return response()->json(['message' => 'Parent non trouvé.'], 404);

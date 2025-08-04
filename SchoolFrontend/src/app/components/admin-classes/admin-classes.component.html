@@ -1,0 +1,197 @@
+<div class="admin-classes-container">
+  <!-- Header -->
+  <div class="page-header">
+    <h1><i class="fas fa-chalkboard"></i> Gestion des Classes</h1>
+    <button class="btn-add" (click)="openAddForm()">
+      <i class="fas fa-plus"></i> Ajouter une classe
+    </button>
+  </div>
+
+  <!-- Messages -->
+  <div class="messages">
+    <div *ngIf="errorMessage" class="error-message">
+      <i class="fas fa-exclamation-triangle"></i> {{ errorMessage }}
+    </div>
+    <div *ngIf="successMessage" class="success-message">
+      <i class="fas fa-check-circle"></i> {{ successMessage }}
+    </div>
+  </div>
+
+  <!-- Modal d'ajout/édition de classe -->
+  <div class="modal-overlay" *ngIf="showModal" [class.active]="showModal" (click)="closeModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2><i class="fas fa-chalkboard-teacher"></i> {{ editingClasse ? 'Modifier la classe' : 'Ajouter une nouvelle classe' }}</h2>
+        <button type="button" class="btn-close" (click)="closeModal()" aria-label="Fermer">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      
+      <form #classeFormElement="ngForm" (ngSubmit)="onSubmit()" class="form">
+        <div class="form-row">
+          <!-- Nom de la classe -->
+          <div class="form-group">
+            <label for="nom">
+              <i class="fas fa-tag"></i> Nom de la classe <span class="required">*</span>
+            </label>
+            <div class="input-with-icon">
+              <input 
+                type="text" 
+                id="nom" 
+                name="nom" 
+                [(ngModel)]="classeForm.nom" 
+                #nom="ngModel"
+                class="form-control"
+                placeholder="Ex: 6ème A"
+                required
+                minlength="2"
+                maxlength="50"
+                [class.is-invalid]="nom.invalid && (nom.dirty || nom.touched)"
+              >
+              <i *ngIf="nom.valid && nom.touched" class="fas fa-check valid-icon"></i>
+              <i *ngIf="nom.invalid && nom.touched" class="fas fa-exclamation-circle invalid-icon"></i>
+            </div>
+            
+            <div *ngIf="nom.invalid && (nom.dirty || nom.touched)" class="error-message">
+              <div *ngIf="nom.errors?.['required']">
+                <i class="fas fa-exclamation-circle"></i> Le nom de la classe est requis
+              </div>
+              <div *ngIf="nom.errors?.['minlength']">
+                <i class="fas fa-exclamation-circle"></i> Le nom doit contenir au moins 2 caractères
+              </div>
+            </div>
+            <div *ngIf="nom.valid && nom.touched" class="hint">
+              Exemples: 6ème A, Terminale S, BTS1 Comptabilité
+            </div>
+          </div>
+          
+          <!-- Niveau -->
+          <div class="form-group">
+            <label for="niveau">
+              <i class="fas fa-layer-group"></i> Niveau
+            </label>
+            <div class="select-wrapper">
+              <select id="niveau" name="niveau" [(ngModel)]="classeForm.niveau" class="form-control">
+                <option value="">Sélectionner un niveau</option>
+                <option *ngFor="let niveau of niveaux" [value]="niveau">{{ niveau }}</option>
+              </select>
+              <i class="fas fa-chevron-down"></i>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label for="capacite">
+              <i class="fas fa-users"></i> Capacité <span class="required">*</span>
+            </label>
+            <div class="input-with-icon">
+              <input 
+                type="number" 
+                id="capacite" 
+                name="capacite" 
+                [(ngModel)]="classeForm.capacite" 
+                #capacite="ngModel"
+                required
+                min="1" 
+                max="50"
+                class="form-control"
+                [class.is-invalid]="capacite.invalid && (capacite.dirty || capacite.touched)"
+                [class.is-valid]="capacite.valid && (capacite.dirty || capacite.touched)"
+              >
+              <i *ngIf="capacite.valid && capacite.touched" class="fas fa-check valid-icon"></i>
+              <i *ngIf="capacite.invalid && capacite.touched" class="fas fa-exclamation-circle invalid-icon"></i>
+              <span class="input-suffix">élèves</span>
+            </div>
+            
+            <div *ngIf="capacite.invalid && (capacite.dirty || capacite.touched)" class="error-message">
+              <div *ngIf="capacite.errors?.['required']">
+                <i class="fas fa-exclamation-circle"></i> La capacité est requise
+              </div>
+              <div *ngIf="capacite.errors?.['min'] || capacite.errors?.['max']">
+                <i class="fas fa-exclamation-circle"></i> La capacité doit être comprise entre 1 et 50
+              </div>
+            </div>
+            
+            <div *ngIf="capacite.valid && capacite.touched" class="hint">
+              <i class="fas fa-check"></i> Capacité valide
+            </div>
+            <div *ngIf="!capacite.touched" class="hint">
+              Entre 1 et 50 élèves
+            </div>
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label for="annee_scolaire_id">
+            <i class="fas fa-calendar-alt"></i> Année scolaire
+          </label>
+          <div class="select-wrapper">
+            <select 
+              id="annee_scolaire_id" 
+              name="annee_scolaire_id" 
+              [(ngModel)]="classeForm.annee_scolaire_id" 
+              class="form-control"
+            >
+              <option value="">Sélectionner une année scolaire</option>
+              <option *ngFor="let annee of anneesScolaires" [value]="annee.id">{{ annee.libelle }}</option>
+            </select>
+            <i class="fas fa-chevron-down"></i>
+          </div>
+        </div>
+        
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" (click)="cancelEdit()" [disabled]="isLoading">
+            <i class="fas fa-times"></i> Annuler
+          </button>
+          <button 
+            type="submit" 
+            class="btn btn-primary" 
+            [disabled]="classeFormElement.invalid || isLoading"
+            [class.loading]="isLoading"
+          >
+            <i class="fas" [class.fa-save]="!isLoading" [class.fa-spinner]="isLoading" [class.fa-spin]="isLoading"></i>
+            {{ isEditing ? 'Mettre à jour' : 'Créer la classe' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Liste des classes -->
+  <div class="content">
+    <div *ngIf="isLoading" class="loading">
+      <i class="fas fa-spinner fa-spin"></i> Chargement des classes...
+    </div>
+    
+    <div *ngIf="!isLoading && classes.length === 0" class="empty-state">
+      <i class="fas fa-chalkboard"></i>
+      <h3>Aucune classe trouvée</h3>
+      <p>Commencez par ajouter votre première classe.</p>
+    </div>
+    
+    <div *ngIf="!isLoading && classes.length > 0" class="classes-grid">
+      <div *ngFor="let classe of classes" class="classe-card">
+        <div class="classe-info">
+          <h3>{{ classe.nom }}</h3>
+          <p *ngIf="classe.niveau">
+            <i class="fas fa-graduation-cap"></i> Niveau: {{ classe.niveau }}
+          </p>
+          <p *ngIf="classe.capacite">
+            <i class="fas fa-users"></i> Capacité: {{ classe.capacite }} élèves
+          </p>
+          <p *ngIf="classe.annee_scolaire_id">
+            <i class="fas fa-calendar"></i> Année: {{ classe.annee_scolaire_id }}
+          </p>
+        </div>
+        
+        <div class="classe-actions">
+          <button class="btn-edit" (click)="openEditForm(classe)" title="Modifier">
+            <i class="fas fa-edit"></i>
+          </button>
+          <button class="btn-delete" (click)="deleteClasse(classe.id!)" title="Supprimer">
+            <i class="fas fa-trash"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div> 

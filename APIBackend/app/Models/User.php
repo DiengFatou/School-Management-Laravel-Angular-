@@ -49,6 +49,14 @@ class User extends Authenticatable
      */
     public function getAuthPassword()
     {
-        return $this->password;
+        return $this->mot_de_passe;
+    }
+
+    /**
+     * Relation avec le modèle Eleve (si l'utilisateur est un élève)
+     */
+    public function eleve()
+    {
+        return $this->hasOne(Eleve::class);
     }
 }

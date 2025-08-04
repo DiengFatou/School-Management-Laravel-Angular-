@@ -14,9 +14,17 @@ export class EnseignantService {
   constructor(private httpClient: HttpClient) {}
 
   // Ajouter un enseignant
-  addEnseignant(data: Enseignant): Observable<any> {
-    return this.httpClient.post(this.REST_API, data)
-      .pipe(catchError(this.handleError));
+  // Utilisation de Partial<Enseignant> pour permettre la création sans l'ID qui sera généré côté serveur
+  addEnseignant(data: Partial<Enseignant>): Observable<any> {
+    console.log('Envoi de la requête POST à l\'API avec les données:', data);
+    return this.httpClient.post(this.REST_API, data, { headers: this.httpHeaders })
+      .pipe(
+        map((response: any) => {
+          console.log('Réponse de l\'API (addEnseignant):', response);
+          return response;
+        }),
+        catchError(this.handleError)
+      );
   }
 
   // Recuperer tous les enseignants

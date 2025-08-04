@@ -25,8 +25,7 @@ class EnseignementController extends Controller
         $validated = $request->validate([
             'enseignant_id' => 'required|exists:enseignants,id',
             'classe_id' => 'required|exists:classes,id',     
-            'matiere_id' => 'required|exists:matieres,id', 
-            ,
+            'matiere_id' => 'required|exists:matieres,id'
         ]);
 
         // Create the enseignement record
@@ -53,8 +52,7 @@ class EnseignementController extends Controller
         $validated = $request->validate([
             'enseignant_id' => 'required|exists:enseignants,id',
             'classe_id' => 'required|exists:classes,id',
-            'matiere_id' => 'required|exists:matieres,id',
-            ,
+            'matiere_id' => 'required|exists:matieres,id'
         ]);
 
         $enseignement->update($validated);

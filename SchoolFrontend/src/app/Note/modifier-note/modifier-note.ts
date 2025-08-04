@@ -1,57 +1,106 @@
 import { Component, NgZone, OnInit } from '@angular/core';
-import { NoteService } from '../../Service/note.service';
+import { NoteService, NoteDetaillee } from '../../Service/note.service';
 import { ActivatedRoute, Router } from '@angular/router';
-import { FormBuilder, FormGroup } from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { CommonModule } from '@angular/common';
+import { Note } from '../../Models/note';
 
 @Component({
   selector: 'app-modifier-note',
-  imports: [],
+  standalone: true,
+  imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './modifier-note.html',
-  styleUrl: './modifier-note.css'
+  styleUrls: ['./modifier-note.css']
 })
 export class ModifierNote implements OnInit {
-  getId: any;
+  noteId: number;
   updateForm: FormGroup;
+  noteDetail: NoteDetaillee | null = null;
+  isLoading = false;
+  errorMessage: string | null = null;
 
   constructor(
-    public formBuilder: FormBuilder,
+    private formBuilder: FormBuilder,
     private router: Router,
     private activatedRoute: ActivatedRoute,
     private ngZone: NgZone,
     private noteService: NoteService
   ) {
-    this.getId = this.activatedRoute.snapshot.paramMap.get('id');
+    const id = this.activatedRoute.snapshot.paramMap.get('id');
+    this.noteId = id ? parseInt(id, 10) : 0;
 
     this.updateForm = this.formBuilder.group({
-      eleve_id: [''],
-      matiere_id: [''],
-      enseignant_id: [''],
-      trimestre: [''],
-      annee_scolaire_id: [''],
-      note: ['']
+      eleve_id: ['', Validators.required],
+      matiere_id: ['', Validators.required],
+      enseignant_id: ['', Validators.required],
+      trimestre: ['', Validators.required],
+      annee_scolaire_id: ['', Validators.required],
+      note: ['', [Validators.required, Validators.min(0), Validators.max(20)]]
     });
   }
 
   ngOnInit(): void {
-    this.noteService.getNote(this.getId).subscribe(result => {
-      this.updateForm.setValue({
-        eleve_id: result['eleve_id'],
-        matiere_id: result['matiere_id'],
-        enseignant_id: result['enseignant_id'],
-        trimestre: result['trimestre'],
-        annee_scolaire_id: result['annee_scolaire_id'],
-        note: result['note']
-      });
+    if (isNaN(this.noteId) || this.noteId <= 0) {
+      this.errorMessage = 'ID de note invalide';
+      return;
+    }
+
+    this.isLoading = true;
+    this.noteService.getNote(this.noteId).subscribe({
+      next: (result: NoteDetaillee) => {
+        this.noteDetail = result;
+        this.updateForm.patchValue({
+          eleve_id: result.eleve.id,
+          matiere_id: result.matiere.id,
+          enseignant_id: result.matiere.enseignant?.id || '',
+          // Ces valeurs devraient être récupérées depuis l'API
+          // Pour l'instant, on utilise des valeurs par défaut
+          trimestre: 1,
+          annee_scolaire_id: 1,
+          note: result.valeur_note
+        });
+        this.isLoading = false;
+      },
+      error: (error) => {
+        console.error('Erreur lors du chargement de la note', error);
+        this.errorMessage = 'Impossible de charger les détails de la note';
+        this.isLoading = false;
+      }
     });
   }
 
-  onUpdate(): any {
-    this.noteService.updateNote(this.getId, this.updateForm.value)
-      .subscribe(() => {
-        console.log('Note mise a jour avec succes');
-        this.ngZone.run(() => this.router.navigateByUrl('/list-note'));
-      }, (err) => {
-        console.error(err);
-      });
+  onUpdate(): void {
+    if (this.isLoading) return;
+    
+    if (!this.updateForm.valid) {
+      this.errorMessage = 'Veuillez remplir correctement tous les champs obligatoires';
+      return;
+    }
+
+    const noteData: Note = {
+      id: this.noteId,
+      eleve_id: this.updateForm.value.eleve_id,
+      matiere_id: this.updateForm.value.matiere_id,
+      enseignant_id: this.updateForm.value.enseignant_id,
+      trimestre: this.updateForm.value.trimestre.toString(),
+      annee_scolaire_id: this.updateForm.value.annee_scolaire_id,
+      note: this.updateForm.value.note
+    };
+
+    this.isLoading = true;
+    this.errorMessage = null;
+
+    this.noteService.updateNote(this.noteId, noteData).subscribe({
+      next: () => {
+        this.ngZone.run(() => {
+          this.router.navigate(['/notes']);
+        });
+      },
+      error: (err) => {
+        console.error('Erreur lors de la mise à jour de la note', err);
+        this.errorMessage = 'Une erreur est survenue lors de la mise à jour de la note';
+        this.isLoading = false;
+      }
+    });
   }
 }

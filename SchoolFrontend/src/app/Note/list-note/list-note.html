@@ -1,1 +1,394 @@
-<p>list-note works!</p>
+<div class="container-fluid py-4">
+  <div class="card">
+    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+      <h2 class="mb-0"><i class="fas fa-graduation-cap me-2"></i> Relevé des Notes des Élèves</h2>
+      <div>
+        <span class="badge bg-light text-dark me-2">
+          <i class="fas fa-calendar-alt me-1"></i> Année Scolaire 2024-2025
+        </span>
+        <span class="badge bg-light text-dark">
+          <i class="fas fa-filter me-1"></i>
+          <select class="form-select form-select-sm d-inline-block w-auto" [(ngModel)]="selectedTrimestre" (change)="applyFilters()">
+            <option [value]="1">1er Trimestre</option>
+            <option [value]="2">2ème Trimestre</option>
+            <option [value]="3">3ème Trimestre</option>
+          </select>
+        </span>
+      </div>
+    </div>
+    
+    <div class="card-body">
+      <!-- Message de chargement -->
+      <div *ngIf="isLoading" class="text-center my-5 py-5">
+        <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
+          <span class="visually-hidden">Chargement...</span>
+        </div>
+        <p class="mt-3 fs-5">Chargement des données en cours...</p>
+      </div>
+      
+      <!-- Message d'erreur -->
+      <div *ngIf="errorMessage" class="alert alert-danger">
+        <i class="fas fa-exclamation-triangle me-2"></i>
+        {{ errorMessage }}
+      </div>
+      
+      <!-- Aucune donnée -->
+      <div *ngIf="!isLoading && !errorMessage && elevesNotes.length === 0" class="text-center py-5">
+        <div class="text-muted">
+          <i class="fas fa-inbox fa-3x mb-3"></i>
+          <p class="fs-5 mb-0">Aucun élève trouvé</p>
+          <p class="small">Aucune donnée d'élève n'est disponible pour le moment</p>
+        </div>
+      </div>
+      
+      <!-- Section de débogage -->
+      <div *ngIf="!isLoading && !errorMessage" class="mb-4 p-3 bg-light rounded">
+        <h5 class="text-primary">Informations de débogage</h5>
+        <div class="row">
+          <div class="col-md-6">
+            <p class="mb-1">Nombre d'élèves chargés: <span class="fw-bold">{{ elevesNotes.length }}</span></p>
+            <p class="mb-1">Nombre d'élèves filtrés: <span class="fw-bold">{{ filteredEleves.length }}</span></p>
+            <p class="mb-1">Page actuelle: <span class="fw-bold">{{ page }}</span></p>
+          </div>
+          <div class="col-md-6">
+            <p class="mb-1">Taille de la collection: <span class="fw-bold">{{ collectionSize }}</span></p>
+            <p class="mb-1">Éléments par page: <span class="fw-bold">{{ pageSize }}</span></p>
+            <p class="mb-1">Affichage: <span class="fw-bold">{{ displayRange.start }} à {{ displayRange.end }} sur {{ collectionSize }}</span></p>
+          </div>
+        </div>
+        <div *ngIf="elevesNotes.length > 0" class="mt-2">
+          <button class="btn btn-sm btn-outline-secondary" (click)="console.log('elevesNotes:', elevesNotes)">
+            <i class="fas fa-code me-1"></i> Afficher les données brutes dans la console
+          </button>
+        </div>
+      </div>
+
+      <!-- Liste des élèves avec leurs notes -->
+      <div *ngIf="!isLoading && !errorMessage && elevesNotes.length > 0">
+        <!-- En-tête de la liste -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <div class="d-flex align-items-center">
+            <h4 class="mb-0 me-3">
+              Liste complète des élèves
+              <span class="badge bg-primary ms-2">{{ filteredEleves.length }}</span>
+            </h4>
+            <div class="btn-group" role="group">
+              <button class="btn btn-outline-secondary btn-sm" (click)="exportToExcel()">
+                <i class="fas fa-file-export me-1"></i> Exporter les données
+              </button>
+            </div>
+          </div>
+          <div class="text-muted small">
+            Page {{ page }} sur {{ (collectionSize / pageSize) | number:'1.0-0' }}
+            ({{ collectionSize }} élèves au total)
+          </div>
+        </div>
+        
+        <!-- Carte par élève -->
+        <div *ngFor="let eleve of paginatedEleves" class="card mb-4 border-0 shadow-sm">
+          <!-- En-tête de la carte élève -->
+          <div class="card-header bg-white d-flex align-items-center py-3">
+            <!-- Photo et informations de base -->
+            <div class="d-flex align-items-center flex-grow-1">
+              <div class="avatar avatar-xl bg-light rounded-circle me-3 d-flex align-items-center justify-content-center">
+                <i class="fas fa-user-graduate fa-2x text-muted"></i>
+              </div>
+              <div>
+                <h4 class="mb-1">
+                  {{ eleve.prenom }} <strong>{{ eleve.nom | uppercase }}</strong>
+                </h4>
+                <div class="d-flex flex-wrap gap-2 align-items-center">
+                  <span class="badge bg-primary">
+                    <i class="fas fa-graduation-cap me-1"></i>
+                    {{ eleve.classe.nom }} ({{ eleve.classe.niveau }})
+                  </span>
+                  <span class="text-muted small">
+                    <i class="fas fa-id-card me-1"></i> {{ eleve.matricule || 'Sans matricule' }}
+                  </span>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Moyenne et rang -->
+            <div class="d-flex align-items-center ms-4">
+              <div class="text-center px-3">
+                <div class="text-uppercase small text-muted">Moyenne</div>
+                <div class="h3 mb-0 fw-bold" [ngClass]="{
+                  'text-success': calculateMoyenneGenerale(eleve) >= 10,
+                  'text-warning': calculateMoyenneGenerale(eleve) < 10 && calculateMoyenneGenerale(eleve) >= 8,
+                  'text-danger': calculateMoyenneGenerale(eleve) < 8
+                }">
+                  {{ calculateMoyenneGenerale(eleve) | number:'1.2-2' }}
+                  <small class="text-muted">/20</small>
+                </div>
+              </div>
+              <div class="vr mx-3"></div>
+              <div class="text-center px-3">
+                <div class="text-uppercase small text-muted">Rang</div>
+                <div class="h3 mb-0 fw-bold">
+                  {{ eleve.rang || '-' }}<small class="text-muted">/{{ filteredEleves.length }}</small>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Corps de la carte élève -->
+          <div class="card-body p-0">
+            <!-- Informations du parent -->
+            <div class="bg-light p-3 border-bottom">
+              <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                  <i class="fas fa-user-tie text-primary me-2"></i>
+                  <div>
+                    <h6 class="mb-0 fw-bold">Responsable légal</h6>
+                    <div *ngIf="eleve.parent" class="small">
+                      <span class="text-dark">{{ eleve.parent.prenom }} {{ eleve.parent.nom | uppercase }}</span>
+                      <span *ngIf="eleve.parent.email || eleve.parent.telephone" class="text-muted ms-2">|</span>
+                      <a *ngIf="eleve.parent.email" href="mailto:{{eleve.parent.email}}" class="text-decoration-none ms-2">
+                        <i class="fas fa-envelope me-1"></i>{{ eleve.parent.email }}
+                      </a>
+                      <a *ngIf="eleve.parent.telephone" href="tel:{{eleve.parent.telephone}}" class="text-decoration-none ms-2">
+                        <i class="fas fa-phone me-1"></i>{{ eleve.parent.telephone }}
+                      </a>
+                    </div>
+                    <div *ngIf="!eleve.parent" class="text-muted small">
+                      Aucun responsable légal renseigné
+                    </div>
+                  </div>
+                </div>
+                <button class="btn btn-sm btn-outline-primary" (click)="contacterParent(eleve)">
+                  <i class="fas fa-paper-plane me-1"></i> Contacter
+                </button>
+              </div>
+            </div>
+            
+            <!-- Notes par matière -->
+            <div class="table-responsive">
+              <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th class="ps-4">Matière</th>
+                    <th class="text-center">Enseignant</th>
+                    <th class="text-center" style="width: 80px;">Coeff</th>
+                    <th class="text-center" style="width: 200px;">Notes</th>
+                    <th class="text-center" style="width: 100px;">Moyenne</th>
+                    <th class="text-center" style="width: 150px;">Appréciation</th>
+                    <th class="text-center pe-4" style="width: 100px;">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <ng-container *ngFor="let matiereNotes of groupNotesByMatiere(eleve.notes)">
+                    <tr class="border-top">
+                      <td class="ps-4">
+                        <div class="fw-semibold">{{ matiereNotes.matiere.nom }}</div>
+                        <div *ngIf="matiereNotes.matiere.enseignant" class="text-muted small">
+                          <i class="fas fa-chalkboard-teacher me-1"></i>
+                          {{ matiereNotes.matiere.enseignant.prenom }} {{ matiereNotes.matiere.enseignant.nom }}
+                        </div>
+                      </td>
+                      <td class="text-center">
+                        {{ matiereNotes.matiere.enseignant ? 
+                          (matiereNotes.matiere.enseignant.prenom + ' ' + matiereNotes.matiere.enseignant.nom) : 
+                          '-' }}
+                      </td>
+                      <td class="text-center fw-bold">
+                        <span class="badge bg-light text-dark">
+                          {{ matiereNotes.matiere.coefficient }}
+                        </span>
+                      </td>
+                      <td class="text-center">
+                        <div class="d-flex flex-wrap gap-2 justify-content-center">
+                          <span *ngFor="let note of matiereNotes.notes" 
+                                class="badge d-flex align-items-center justify-content-center" 
+                                style="width: 36px; height: 36px; font-size: 0.9rem;"
+                                [class]="getNoteClass(note.valeur_note)"
+                                [title]="'Note: ' + (safeNoteValue(note.valeur_note) !== null ? (safeNoteValue(note.valeur_note) | number:'1.1-1') : 'Non noté') + 
+                                         (note.date_evaluation ? '\nDate: ' + (note.date_evaluation | date:'dd/MM/yyyy') : '') + 
+                                         (note.commentaire ? '\nCommentaire: ' + note.commentaire : '')">
+                            {{ safeNoteValue(note.valeur_note) !== null ? (safeNoteValue(note.valeur_note) | number:'1.1-1') : '-' }}
+                          </span>
+                        </div>
+                      </td>
+                      <td class="text-center">
+                        <div class="d-flex flex-column align-items-center">
+                          <div class="position-relative">
+                            <div class="position-absolute top-0 start-50 translate-middle">
+                              <i *ngIf="calculateMoyenneMatiere(matiereNotes.notes) >= 10" class="fas fa-check-circle text-success"></i>
+                              <i *ngIf="calculateMoyenneMatiere(matiereNotes.notes) < 10 && calculateMoyenneMatiere(matiereNotes.notes) >= 8" class="fas fa-exclamation-circle text-warning"></i>
+                              <i *ngIf="calculateMoyenneMatiere(matiereNotes.notes) < 8" class="fas fa-times-circle text-danger"></i>
+                            </div>
+                            <span class="fw-bold fs-5 px-2" [ngClass]="{
+                              'text-success': calculateMoyenneMatiere(matiereNotes.notes) >= 10,
+                              'text-warning': calculateMoyenneMatiere(matiereNotes.notes) < 10 && 
+                                            calculateMoyenneMatiere(matiereNotes.notes) >= 8,
+                              'text-danger': calculateMoyenneMatiere(matiereNotes.notes) < 8
+                            }">
+                              {{ calculateMoyenneMatiere(matiereNotes.notes) | number:'1.2-2' }}
+                            </span>
+                          </div>
+                          <small class="text-muted">/20</small>
+                        </div>
+                      </td>
+                      <td class="text-center">
+                        <div class="d-flex flex-column">
+                          <span class="small fw-medium" [ngClass]="{
+                            'text-success': calculateMoyenneMatiere(matiereNotes.notes) >= 10,
+                            'text-warning': calculateMoyenneMatiere(matiereNotes.notes) < 10 && 
+                                          calculateMoyenneMatiere(matiereNotes.notes) >= 8,
+                            'text-danger': calculateMoyenneMatiere(matiereNotes.notes) < 8
+                          }">
+                            <i class="fas fa-quote-left me-1 small"></i>
+                            {{ getAppreciation(calculateMoyenneMatiere(matiereNotes.notes)) }}
+                            <i class="fas fa-quote-right ms-1 small"></i>
+                          </span>
+                          <span class="small text-muted">
+                            <i class="fas fa-sticky-note me-1"></i>
+                            {{ matiereNotes.notes.length }} note(s)
+                          </span>
+                        </div>
+                      </td>
+                      <td class="text-center pe-4">
+                        <div class="btn-group btn-group-sm" role="group">
+                          <button class="btn btn-outline-primary" 
+                                  (click)="ajouterNote(eleve.id, matiereNotes.matiere.id)"
+                                  title="Ajouter une note">
+                            <i class="fas fa-plus"></i>
+                          </button>
+                          <button class="btn btn-outline-info" 
+                                  (click)="voirDetailsMatiere(eleve, matiereNotes.matiere)"
+                                  title="Voir le détail">
+                            <i class="fas fa-eye"></i>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  </ng-container>
+                </tbody>
+                <tfoot class="table-light">
+                  <tr>
+                    <td colspan="3" class="ps-4 fw-bold">
+                      <i class="fas fa-calculator me-2"></i>Moyenne Générale
+                    </td>
+                    <td class="text-center">
+                      <span class="badge bg-primary">
+                        {{ getTotalCoefficients(eleve.notes) }} coeff.
+                      </span>
+                    </td>
+                    <td class="text-center">
+                      <div class="d-flex flex-column align-items-center">
+                        <span class="fw-bold fs-4" [ngClass]="{
+                          'text-success': calculateMoyenneGenerale(eleve) >= 10,
+                          'text-warning': calculateMoyenneGenerale(eleve) < 10 && 
+                                        calculateMoyenneGenerale(eleve) >= 8,
+                          'text-danger': calculateMoyenneGenerale(eleve) < 8
+                        }">
+                          {{ calculateMoyenneGenerale(eleve) | number:'1.2-2' }}
+                        </span>
+                        <small class="text-muted">/20</small>
+                      </div>
+                    </td>
+                    <td class="text-center">
+                      <span class="badge" [ngClass]="{
+                        'bg-success bg-opacity-10 text-success border border-success': calculateMoyenneGenerale(eleve) >= 10,
+                        'bg-warning bg-opacity-10 text-warning border border-warning': calculateMoyenneGenerale(eleve) < 10 && 
+                                                                                   calculateMoyenneGenerale(eleve) >= 8,
+                        'bg-danger bg-opacity-10 text-danger border border-danger': calculateMoyenneGenerale(eleve) < 8,
+                        'p-2': true
+                      }">
+                        {{ getAppreciation(calculateMoyenneGenerale(eleve)) }}
+                      </span>
+                    </td>
+                    <td class="pe-4">
+                      <div class="d-flex justify-content-end">
+                        <button class="btn btn-sm btn-outline-secondary" (click)="voirBulletinComplet(eleve)">
+                          <i class="fas fa-file-pdf me-1"></i> Bulletin
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+            
+            <!-- Commentaires et appréciations -->
+            <div class="row mt-4">
+              <div class="col-md-6">
+                <div class="card h-100">
+                  <div class="card-header bg-light">
+                    <i class="fas fa-comment-dots me-2"></i> Appréciations des professeurs
+                  </div>
+                  <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                      <li *ngFor="let matiereNotes of groupNotesByMatiere(eleve.notes)" class="mb-2">
+                        <strong>{{ matiereNotes.matiere.nom }} :</strong>
+                        <span class="text-muted">
+                          {{ getAppreciation(calculateMoyenneMatiere(matiereNotes.notes)) }}
+                        </span>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="card h-100">
+                  <div class="card-header bg-light">
+                    <i class="fas fa-clipboard-check me-2"></i> Appréciation générale
+                  </div>
+                  <div class="card-body">
+                    <div class="form-floating">
+                      <textarea class="form-control" placeholder="Écrire une appréciation" 
+                                [(ngModel)]="eleve.appreciation" style="height: 120px"></textarea>
+                      <label>Appréciation générale</label>
+                    </div>
+                    <div class="d-flex justify-content-end mt-2">
+                      <button class="btn btn-sm btn-primary">
+                        <i class="fas fa-save me-1"></i> Enregistrer
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Pagination -->
+        <div class="d-flex justify-content-between align-items-center mt-4">
+          <div class="text-muted">
+            Affichage de {{ displayRange.start }} à {{ displayRange.end }} sur {{ elevesNotes.length }} élèves
+          </div>
+          <ngb-pagination 
+            [(page)]="page" 
+            [pageSize]="pageSize" 
+            [collectionSize]="elevesNotes.length"
+            [maxSize]="5"
+            [rotate]="true"
+            [boundaryLinks]="true"
+            class="d-flex justify-content-end">
+          </ngb-pagination>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Pied de page -->
+    <div class="card-footer text-muted small">
+      <div class="d-flex justify-content-between">
+        <div>
+          <i class="fas fa-info-circle me-1"></i> 
+          Année scolaire 2024-2025 - {{ getCurrentTrimestre() }} - Édition du {{ today | date:'dd/MM/yyyy' }}
+        </div>
+        <div>
+          <span class="me-3">
+            <i class="fas fa-circle text-success me-1"></i> ≥ 10/20
+          </span>
+          <span class="me-3">
+            <i class="fas fa-circle text-warning me-1"></i> 8-9.99/20
+          </span>
+          <span>
+            <i class="fas fa-circle text-danger me-1"></i> < 8/20
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

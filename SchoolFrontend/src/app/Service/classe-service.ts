@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
+import { Observable, throwError } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { Classe } from '../Models/classe.model';
 
 @Injectable({
@@ -11,9 +12,32 @@ export class ClasseService {
 
   constructor(private http: HttpClient) { }
 
+  private httpHeaders = new HttpHeaders().set('Content-Type', 'application/json');
+
   // Récupérer toutes les classes
   getClasses(): Observable<Classe[]> {
-    return this.http.get<Classe[]>(this.apiUrl);
+    console.log('Appel API vers:', this.apiUrl);
+    return this.http.get<Classe[]>(this.apiUrl, { headers: this.httpHeaders })
+      .pipe(
+        catchError(error => {
+          console.error('Erreur dans classeService.getClasses():', error);
+          return this.handleError(error);
+        })
+      );
+  }
+
+  // Gestion des erreurs
+  private handleError(error: HttpErrorResponse) {
+    let errorMessage = 'Une erreur est survenue';
+    if (error.error instanceof ErrorEvent) {
+      // Erreur côté client
+      errorMessage = `Erreur: ${error.error.message}`;
+    } else {
+      // Erreur côté serveur
+      errorMessage = `Code d'erreur: ${error.status}\nMessage: ${error.message}`;
+    }
+    console.error(errorMessage);
+    return throwError(() => new Error(errorMessage));
   }
 
   // Récupérer une classe par ID

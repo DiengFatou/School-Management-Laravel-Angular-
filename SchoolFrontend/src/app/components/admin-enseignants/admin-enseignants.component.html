@@ -1,0 +1,224 @@
+<div class="admin-enseignants-container">
+  <!-- En-tête -->
+  <div class="page-header">
+    <h1><i class="fas fa-chalkboard-teacher"></i> Gestion des Enseignants</h1>
+    <button class="btn btn-primary" (click)="openAddForm()">
+      <i class="fas fa-plus"></i> Ajouter un enseignant
+    </button>
+  </div>
+
+  <!-- Messages d'erreur et de succès -->
+  <div class="messages">
+    <div *ngIf="errorMessage" class="alert alert-danger">
+      <i class="fas fa-exclamation-triangle"></i> {{ errorMessage }}
+    </div>
+    <div *ngIf="successMessage" class="alert alert-success">
+      <i class="fas fa-check-circle"></i> {{ successMessage }}
+    </div>
+  </div>
+
+  <!-- Barre de recherche -->
+  <div class="search-container">
+    <div class="search-box">
+      <i class="fas fa-search"></i>
+      <input 
+        type="text" 
+        [(ngModel)]="searchTerm" 
+        (input)="currentPage = 1" 
+        placeholder="Rechercher un enseignant..."
+        class="form-control"
+      >
+    </div>
+  </div>
+
+  <!-- Liste des enseignants -->
+  <div class="content">
+    <div *ngIf="isLoading" class="loading">
+      <i class="fas fa-spinner fa-spin"></i> Chargement des enseignants...
+    </div>
+    
+    <div *ngIf="!isLoading && enseignants.length === 0" class="empty-state">
+      <i class="fas fa-chalkboard-teacher"></i>
+      <h3>Aucun enseignant trouvé</h3>
+      <p>Commencez par ajouter votre premier enseignant.</p>
+    </div>
+    
+    <div *ngIf="!isLoading && enseignants.length > 0" class="enseignants-grid">
+      <div *ngFor="let enseignant of paginatedEnseignants" class="enseignant-card">
+        <div class="enseignant-header" (click)="toggleDetails(enseignant.id!)">
+          <div class="enseignant-avatar">
+            <i class="fas fa-chalkboard-teacher"></i>
+          </div>
+          <div class="enseignant-title">
+            <h3>{{ enseignant.nom_complet || 'Nom non renseigné' }}</h3>
+            <span class="status visible">Actif</span>
+          </div>
+          <div class="toggle-details">
+            <i class="fas" [class.fa-chevron-down]="!expandedCards[enseignant.id!]" [class.fa-chevron-up]="expandedCards[enseignant.id!]"></i>
+          </div>
+        </div>
+        
+        <!-- Détails de l'enseignant -->
+        <div class="enseignant-details" [class.expanded]="expandedCards[enseignant.id!]">
+          <div class="detail-row">
+            <i class="fas fa-id-card"></i>
+            <span>ID: {{ enseignant.id }}</span>
+          </div>
+          
+          <div class="detail-row">
+            <i class="fas fa-user-tie"></i>
+            <span>ID Utilisateur: {{ enseignant.user_id || 'Non associé' }}</span>
+          </div>
+          
+          <!-- Section des matières enseignées -->
+          <div class="matieres-section" *ngIf="expandedCards[enseignant.id!]">
+            <h4><i class="fas fa-book"></i> Matières enseignées</h4>
+            
+            <div *ngIf="isLoadingDetails[enseignant.id!]" class="loading-details">
+              <i class="fas fa-spinner fa-spin"></i> Chargement des détails...
+            </div>
+            
+            <div *ngIf="!isLoadingDetails[enseignant.id!] && (!enseignant.enseignements || enseignant.enseignements.length === 0)" class="no-data">
+              <i class="fas fa-info-circle"></i> Aucune matière attribuée à cet enseignant.
+            </div>
+            
+            <div *ngIf="!isLoadingDetails[enseignant.id!] && enseignant.enseignements && enseignant.enseignements.length > 0" class="matieres-list">
+              <div *ngFor="let matiere of getMatieresUniques(enseignant)" class="matiere-item">
+                <div class="matiere-header">
+                  <i class="fas fa-book"></i>
+                  <strong>{{ matiere }}</strong>
+                </div>
+                <div class="classes-list">
+                  <span class="classes-label">Classes :</span>
+                  <span *ngIf="getClassesParMatiere(enseignant, matiere).length === 0" class="no-classes">
+                    Aucune classe associée
+                  </span>
+                  <span *ngFor="let classe of getClassesParMatiere(enseignant, matiere)" class="classe-badge">
+                    {{ classe }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="enseignant-actions">
+          <button class="btn-edit" (click)="$event.stopPropagation(); openEditForm(enseignant);" title="Modifier">
+            <i class="fas fa-edit"></i>
+          </button>
+          <button class="btn-delete" (click)="$event.stopPropagation(); deleteEnseignant(enseignant.id!);" title="Supprimer">
+            <i class="fas fa-trash"></i>
+          </button>
+        </div>
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  <div *ngIf="totalPages > 1" class="pagination-container">
+    <nav aria-label="Navigation des pages">
+      <ul class="pagination justify-content-center">
+        <li class="page-item" [class.disabled]="currentPage === 1">
+          <a class="page-link" href="#" (click)="changePage(currentPage - 1); $event.preventDefault()">
+            <i class="fas fa-chevron-left"></i>
+          </a>
+        </li>
+        
+        <li *ngFor="let page of [].constructor(totalPages); let i = index" 
+            class="page-item" 
+            [class.active]="i + 1 === currentPage">
+          <a class="page-link" href="#" (click)="changePage(i + 1); $event.preventDefault()">
+            {{ i + 1 }}
+          </a>
+        </li>
+        
+        <li class="page-item" [class.disabled]="currentPage === totalPages">
+          <a class="page-link" href="#" (click)="changePage(currentPage + 1); $event.preventDefault()">
+            <i class="fas fa-chevron-right"></i>
+          </a>
+        </li>
+      </ul>
+    </nav>
+    <div class="text-muted text-center">
+      Affichage de {{ (currentPage - 1) * itemsPerPage + 1 }} à 
+      {{ currentPage * itemsPerPage > filteredEnseignants.length ? filteredEnseignants.length : currentPage * itemsPerPage }}
+      sur {{ filteredEnseignants.length }} enseignant(s)
+    </div>
+  </div>
+
+  <!-- Modal d'ajout/édition -->
+  <div *ngIf="showModal" class="modal-overlay" (click)="cancelEdit()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ isEditing ? 'Modifier l\'enseignant' : 'Ajouter un enseignant' }}</h2>
+        <button class="btn-close" (click)="cancelEdit()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      
+      <form (ngSubmit)="onSubmit()" class="form">
+        <div class="form-section">
+          <h3>Informations personnelles</h3>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label for="nom_complet">Nom complet *</label>
+              <input 
+                type="text" 
+                id="nom_complet" 
+                name="nom_complet" 
+                [(ngModel)]="enseignantForm.nom_complet" 
+                required>
+            </div>
+            
+
+          </div>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label for="matiere">Matière *</label>
+              <select 
+                id="matiere" 
+                name="matiere" 
+                [(ngModel)]="selectedMatiereId"
+                required>
+                <option [ngValue]="0" disabled selected>Sélectionnez une matière</option>
+                <option *ngFor="let matiere of matieres" [ngValue]="matiere.id">
+                  {{ matiere.nom }} - Coef {{ matiere.coefficient }} - {{ matiere.niveau }}
+                </option>
+              </select>
+              <div *ngIf="isLoadingMatieres" class="loading-text">Chargement des matières...</div>
+            </div>
+            
+            <div class="form-group">
+              <label for="classe">Classe *</label>
+              <select 
+                id="classe" 
+                name="classe" 
+                [(ngModel)]="selectedClasseId"
+                required>
+                <option [ngValue]="0" disabled selected>Sélectionnez une classe</option>
+                <option *ngFor="let classe of classes" [ngValue]="classe.id">
+                  {{ classe.nom }} ({{ classe.niveau }})
+                </option>
+              </select>
+              <div *ngIf="isLoadingClasses" class="loading-text">Chargement des classes...</div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="form-actions">
+          <button type="button" class="btn btn-cancel" (click)="cancelEdit()">
+            <i class="fas fa-times"></i> Annuler
+          </button>
+          <button type="submit" class="btn btn-primary" [disabled]="!enseignantForm.nom_complet">
+            <i class="fas" [class.fa-save]="isEditing" [class.fa-plus]="!isEditing"></i>
+            {{ isEditing ? 'Enregistrer' : 'Ajouter' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+  
+  <!-- Overlay pour le modal -->
+  <div *ngIf="showModal" class="modal-backdrop fade show" (click)="cancelEdit()"></div>
+</div>

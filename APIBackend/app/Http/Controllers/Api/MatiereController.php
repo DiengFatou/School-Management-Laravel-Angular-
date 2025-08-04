@@ -9,10 +9,24 @@ class MatiereController extends Controller
 {
     /**
      * Display a listing of the resource.
+     *
+     * @return \Illuminate\Http\JsonResponse
      */
     public function index()
     {
-        //
+        try {
+            $matieres = \App\Models\Matiere::select('id', 'nom', 'coefficient', 'niveau')
+                ->orderBy('nom')
+                ->get();
+                
+            return response()->json($matieres);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de la récupération des matières',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     /**

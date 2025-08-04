@@ -1,0 +1,128 @@
+<div class="admin-dashboard">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <i class="fas fa-school"></i>
+      <span class="logo-text">School Admin</span>
+    </div>
+    <nav class="sidebar-nav">
+      <a (click)="navigateTo('dashboard')" [class.active]="currentView === 'dashboard'"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+      <a (click)="navigateTo('eleves')" [class.active]="currentView === 'eleves'"><i class="fas fa-user-graduate"></i> Élèves</a>
+      <a (click)="navigateTo('classes')" [class.active]="currentView === 'classes'"><i class="fas fa-chalkboard"></i> Classes</a>
+      <a (click)="navigateTo('enseignants')" [class.active]="currentView === 'enseignants'"><i class="fas fa-user-tie"></i> Enseignants</a>
+      <a (click)="navigateTo('matieres')" [class.active]="currentView === 'matieres'"><i class="fas fa-book"></i> Matières</a>
+      <a (click)="navigateTo('notes')" [class.active]="currentView === 'notes'"><i class="fas fa-edit"></i> Notes</a>
+      <a (click)="navigateTo('bulletins')" [class.active]="currentView === 'bulletins'"><i class="fas fa-file-alt"></i> Bulletins</a>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="logout-btn" (click)="logout()"><i class="fas fa-sign-out-alt"></i> <span>Déconnexion</span></button>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <!-- Header -->
+    <header class="main-header">
+      <div class="header-left">
+        <h1 class="page-title"><i class="fas fa-tachometer-alt"></i> Tableau de bord</h1>
+        <span class="page-subtitle">Bienvenue, {{ currentUser.name || 'Admin' }} !</span>
+      </div>
+      <div class="header-actions">
+        <button class="action-btn"><i class="fas fa-bell"></i><span class="notification-badge">3</span></button>
+        <div class="user-avatar"><i class="fas fa-user-circle"></i></div>
+      </div>
+    </header>
+
+    <!-- Dashboard View -->
+    <div *ngIf="currentView === 'dashboard'" class="dashboard-content">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon students"><i class="fas fa-user-graduate"></i></div>
+          <div class="stat-content">
+            <div class="stat-number">{{ stats.eleves }}</div>
+            <div class="stat-label">Élèves</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon classes"><i class="fas fa-chalkboard"></i></div>
+          <div class="stat-content">
+            <div class="stat-number">{{ stats.classes }}</div>
+            <div class="stat-label">Classes</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon teachers"><i class="fas fa-user-tie"></i></div>
+          <div class="stat-content">
+            <div class="stat-number">{{ stats.enseignants }}</div>
+            <div class="stat-label">Enseignants</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon subjects"><i class="fas fa-book"></i></div>
+          <div class="stat-content">
+            <div class="stat-number">{{ stats.matieres }}</div>
+            <div class="stat-label">Matières</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Graphiques -->
+      <app-dashboard-charts></app-dashboard-charts>
+
+      <!-- Actions rapides -->
+      <section class="quick-actions">
+        <h2 class="section-title"><i class="fas fa-bolt"></i> Actions rapides</h2>
+        <div class="actions-grid">
+          <div class="action-card" (click)="navigateTo('eleves')">
+            <i class="fas fa-user-plus"></i>
+            <span>Ajouter un élève</span>
+          </div>
+          <div class="action-card" (click)="navigateTo('enseignants')">
+            <i class="fas fa-user-plus"></i>
+            <span>Ajouter un enseignant</span>
+          </div>
+          <div class="action-card" (click)="navigateTo('classes')">
+            <i class="fas fa-plus"></i>
+            <span>Créer une classe</span>
+          </div>
+          <div class="action-card" (click)="navigateTo('notes')">
+            <i class="fas fa-star"></i>
+            <span>Gérer les notes</span>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- Élèves View -->
+    <div *ngIf="currentView === 'eleves'" class="content-view">
+      <app-admin-eleves></app-admin-eleves>
+    </div>
+
+    <!-- Classes View -->
+    <div *ngIf="currentView === 'classes'" class="content-view">
+      <app-admin-classes></app-admin-classes>
+    </div>
+
+    <!-- Enseignants View -->
+    <div *ngIf="currentView === 'enseignants'" class="content-view">
+      <app-admin-enseignants></app-admin-enseignants>
+    </div>
+
+    <div *ngIf="currentView === 'matieres'" class="content-view">
+      <div class="coming-soon">
+        <h2>Gestion des Matières</h2>
+        <p>Cette fonctionnalité sera bientôt disponible.</p>
+      </div>
+    </div>
+
+    <!-- Bulletins View -->
+    <div *ngIf="currentView === 'bulletins'" class="content-view">
+      <app-list-bulletin></app-list-bulletin>
+    </div>
+
+    <!-- Notes View -->
+    <div *ngIf="currentView === 'notes'" class="content-view">
+      <app-list-note></app-list-note>
+    </div>
+  </main>
+</div>
