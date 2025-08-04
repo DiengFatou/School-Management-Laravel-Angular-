@@ -164,16 +164,37 @@ class BulletinController extends Controller
             'eleve.classe'
         ])->findOrFail($id);
 
-        $pdf = Pdf::loadView('bulletins.pdf', compact('bulletin'));
+        // Configuration spécifique pour DOMPDF
+        $options = [
+            'isHtml5ParserEnabled' => true,
+            'isRemoteEnabled' => true,
+            'defaultPaperSize' => 'A4',
+            'dpi' => 96,
+            'isPhpEnabled' => true,
+            'isJavascriptEnabled' => false,
+            'debugKeepTemp' => false,
+            'chroot' => [
+                realpath(base_path('resources/views')),
+                realpath(base_path('public')),
+            ],
+        ];
+
+        // Créer une instance PDF avec les options
+        $pdf = Pdf::loadView('bulletins.pdf', compact('bulletin'))
+                 ->setPaper('A4', 'portrait')
+                 ->setOptions($options);
         
         // Si vous voulez sauvegarder le PDF
         $filename = "bulletin-{$bulletin->eleve->nom}-{$bulletin->trimestre}-{$bulletin->anneeScolaire->annee}.pdf";
         $path = "bulletins/{$filename}";
+        
+        // Sauvegarder le PDF
         Storage::put($path, $pdf->output());
         
         // Mettre à jour le chemin du PDF
         $bulletin->update(['pdf_path' => $path]);
         
+        // Télécharger le PDF avec les en-têtes appropriés
         return $pdf->download($filename);
     }
 

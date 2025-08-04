@@ -1,55 +1,616 @@
-/* Styles pour le tableau des notes */
-.table {
-  font-size: 0.9rem;
+/* Styles généraux */
+:host {
+  display: block;
+  padding: 1rem;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  line-height: 1.6;
+  color: #333;
+}
+
+/* Variables pour les couleurs du bulletin */
+:root {
+  --bulletin-primary: #0A81A2;
+  --bulletin-secondary: #94C8BD;
+  --bulletin-accent1: #F8C7B0;
+  --bulletin-accent2: #F09CA5;
+  --bulletin-dark: #094A5C;
+  --bulletin-white: #FFFFFF;
+  --bulletin-black: #000000;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.03); }
+  100% { transform: scale(1); }
+}
+
+/* Effets de transition */
+.transition-all {
+  transition: all 0.3s ease-in-out;
+}
+
+.hover-scale:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1) !important;
+}
+
+
+
+/* Modal de bulletin */
+#bulletinModal {
+  z-index: 1060;
+  animation: fadeIn 0.4s ease-out;
+}
+
+#bulletinModal .modal-dialog {
+  max-width: 90%;
+  margin: 1.75rem auto;
+}
+
+#bulletinModal .modal-content {
+  border: 2px solid var(--bulletin-secondary);
+  box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.15);
+  border-radius: 0.8rem;
+  overflow: hidden;
+  background-color: var(--bulletin-white);
+  transition: all 0.3s ease;
+  animation: fadeIn 0.5s ease-out;
+}
+
+#bulletinModal .modal-content:hover {
+  box-shadow: 0 1.5rem 4rem rgba(0, 0, 0, 0.2);
+}
+
+#bulletinModal .modal-header {
+  background: linear-gradient(135deg, var(--bulletin-primary) 0%, var(--bulletin-dark) 100%);
+  border-bottom: 3px solid var(--bulletin-accent1);
+  padding: 1.5rem 2rem;
+  color: var(--bulletin-white);
+  position: relative;
+  overflow: hidden;
+}
+
+#bulletinModal .modal-header::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+#bulletinModal .modal-header:hover::before {
+  opacity: 1;
+}
+
+#bulletinModal .modal-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  color: var(--bulletin-white);
+}
+
+#bulletinModal .modal-body {
+  padding: 2rem;
+  background-color: var(--bulletin-white);
+  color: var(--bulletin-black);
+}
+
+/* Styles spécifiques pour le tableau du bulletin */
+#bulletinModal .table {
+  border: 1px solid var(--bulletin-secondary);
+}
+
+#bulletinModal .table thead th {
+  background-color: var(--bulletin-dark);
+  color: var(--bulletin-white);
+  border-bottom: 2px solid var(--bulletin-accent1);
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  letter-spacing: 0.5px;
+}
+
+#bulletinModal .table tbody tr:nth-child(even) {
+  background-color: rgba(148, 200, 189, 0.1);
+}
+
+#bulletinModal .table tbody tr:hover {
+  background-color: rgba(248, 199, 176, 0.2);
+}
+
+/* Styles pour les badges de notes dans le bulletin */
+#bulletinModal .badge {
+  padding: 0.4em 0.8em;
+  font-weight: 600;
+  border-radius: 4px;
+  font-size: 0.85em;
+  background-color: var(--bulletin-secondary);
+  color: var(--bulletin-dark);
+}
+
+/* Styles pour les appréciations */
+#bulletinModal .appreciation-badge {
+  background-color: var(--bulletin-accent1);
+  color: var(--bulletin-dark);
+  padding: 0.3em 0.8em;
+  border-radius: 4px;
+  font-weight: 500;
+  display: inline-block;
+  margin-top: 0.3em;
+}
+
+/* Boutons du footer */
+#bulletinModal .modal-footer {
+  background-color: #f8f9fa;
+  border-top: 1px solid var(--bulletin-secondary);
+  padding: 1rem 1.5rem;
+}
+
+#bulletinModal .btn-primary {
+  background-color: var(--bulletin-primary);
+  border-color: var(--bulletin-primary);
+}
+
+#bulletinModal .btn-primary:hover {
+  background-color: var(--bulletin-dark);
+  border-color: var(--bulletin-dark);
+}
+
+#bulletinModal .btn-secondary {
+  background-color: var(--bulletin-accent2);
+  border-color: var(--bulletin-accent2);
+  color: var(--bulletin-dark);
+}
+
+#bulletinModal .btn-secondary:hover {
+  background-color: var(--bulletin-accent1);
+  border-color: var(--bulletin-accent1);
+  color: var(--bulletin-dark);
+}
+
+/* Styles pour l'impression */
+/* Styles d'impression améliorés */
+@media print {
+  #bulletinModal .modal-dialog {
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0;
+  }
+  
+  #bulletinModal .modal-content {
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+  }
+  
+  #bulletinModal .modal-header {
+    padding: 1rem !important;
+    page-break-after: avoid;
+  }
+  
+  #bulletinModal .table {
+    page-break-inside: avoid;
+  }
+  
+  .no-print {
+    display: none !important;
+  }
+  
+  #bulletinModal .modal-content {
+    border: none;
+    box-shadow: none;
+  }
+  
+  #bulletinModal .modal-title {
+    color: var(--bulletin-black) !important;
+  }
+  
+  #bulletinModal .table thead th {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    color: var(--bulletin-white) !important;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    letter-spacing: 0.5px;
+    padding: 1rem 1.25rem;
+    border: none;
+    background: linear-gradient(135deg, var(--bulletin-primary), var(--bulletin-dark));
+    position: relative;
+    transition: all 0.3s ease;
+  }
+
+  #bulletinModal .table thead th:first-child {
+    border-top-left-radius: 0.5rem;
+  }
+
+  #bulletinModal .table thead th:last-child {
+    border-top-right-radius: 0.5rem;
+  }
+
+  #bulletinModal .table tbody tr {
+    transition: all 0.2s ease;
+  }
+
+  #bulletinModal .table tbody tr:hover {
+    background-color: rgba(0, 0, 0, 0.01);
+    transform: translateX(4px);
+  }
+  
+  #bulletinModal .badge, 
+  #bulletinModal .appreciation-badge {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
+
+/* Styles pour les badges de notes */
+.badge {
+  padding: 0.5em 0.75em;
+  font-weight: 600;
+  border-radius: 0.375rem;
+  font-size: 0.85em;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Classes de couleurs pour les moyennes */
+.text-excellente { color: #198754 !important; }
+.text-bonne { color: #0d6efd !important; }
+.text-moyenne { color: #fd7e14 !important; }
+.text-faible { color: #ffc107 !important; }
+.text-insuffisante { color: #dc3545 !important; }
+
+.bg-excellente { background-color: #198754; color: white; }
+.bg-bonne { background-color: #0d6efd; color: white; }
+.bg-moyenne { background-color: #fd7e14; color: white; }
+.bg-faible { background-color: #ffc107; color: #000; }
+.bg-insuffisante { background-color: #dc3545; color: white; }
+
+.bg-excellente-subtle { background-color: rgba(25, 135, 84, 0.1) !important; }
+.bg-bonne-subtle { background-color: rgba(13, 110, 253, 0.1) !important; }
+.bg-moyenne-subtle { background-color: rgba(253, 126, 20, 0.1) !important; }
+.bg-faible-subtle { background-color: rgba(255, 193, 7, 0.1) !important; }
+.bg-insuffisante-subtle { background-color: rgba(220, 53, 69, 0.1) !important; }
+
+/* Tableau des notes */
+/* Styles de tableau améliorés */
+#bulletinModal .table {
+  margin-bottom: 0;
   border-collapse: separate;
   border-spacing: 0;
+  background: white;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.05);
+  background-color: white;
+  border-radius: 0.5rem;
 }
 
-.table th {
+#bulletinModal .table th {
+  background-color: #f1f3f5;
+  border-bottom-width: 1px;
   font-weight: 600;
-  background-color: #f8f9fa;
-  white-space: nowrap;
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.1);
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  color: #495057;
+  padding: 1rem;
 }
 
-/* Styles pour les badges de note */
+#bulletinModal .table td {
+  padding: 1rem;
+  vertical-align: middle;
+  border-color: #e9ecef;
+}
+
+#bulletinModal .table tr:last-child td {
+  border-bottom: none;
+}
+
+/* Cartes d'appréciation */
+#bulletinModal .card {
+  border: 1px solid #e9ecef;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  height: 100%;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+#bulletinModal .card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.05);
+}
+
+#bulletinModal .card-header {
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #e9ecef;
+  padding: 1rem 1.25rem;
+  font-weight: 600;
+  color: #495057;
+}
+
+#bulletinModal .card-body {
+  padding: 1.25rem;
+}
+
+/* Légende des notes */
+#bulletinModal .alert-light {
+  background-color: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 0.5rem;
+  padding: 1rem 1.25rem;
+  margin-bottom: 0;
+}
+
+/* Boutons de la modale */
+#bulletinModal .modal-footer {
+  border-top: 1px solid #e9ecef;
+  padding: 1.25rem 1.5rem;
+  background-color: #f8f9fa;
+}
+
+#bulletinModal .btn {
+  padding: 0.5rem 1.25rem;
+  font-weight: 500;
+  border-radius: 0.375rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#bulletinModal .btn i {
+  margin-right: 0.5rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  #bulletinModal .modal-dialog {
+    max-width: 95%;
+    margin: 0.5rem;
+  }
+  
+  #bulletinModal .modal-body {
+    padding: 1.25rem;
+  }
+  
+  #bulletinModal .table-responsive {
+    border-radius: 0.375rem;
+    border: 1px solid #e9ecef;
+  }
+  
+  #bulletinModal .table {
+    font-size: 0.9rem;
+  }
+  
+  #bulletinModal .table th,
+  #bulletinModal .table td {
+    padding: 0.75rem 0.5rem;
+  }
+  
+  #bulletinModal .badge {
+    padding: 0.35em 0.6em;
+    font-size: 0.75em;
+  }
+}
+
+/* Carte élève */
+.eleve-card {
+  background: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 1.5rem;
+  overflow: hidden;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.eleve-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* En-tête de la carte élève */
+.eleve-header {
+  background: linear-gradient(135deg, #4b6cb7, #182848);
+  color: white;
+  padding: 1rem 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.eleve-info h5 {
+  margin: 0;
+  font-weight: 600;
+  font-size: 1.25rem;
+}
+
+.eleve-details {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.9rem;
+  opacity: 0.9;
+  margin-top: 0.25rem;
+}
+
+/* Contenu de la carte */
+.eleve-content {
+  padding: 1.5rem;
+}
+
+/* Section matières */
+.matiere-section {
+  margin-bottom: 1.5rem;
+}
+
+.matiere-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #eee;
+}
+
+.matiere-title {
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.enseignant-info {
+  color: #6c757d;
+  font-size: 0.9rem;
+}
+
+/* Notes */
+.notes-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+/* Badges de notes */
 .badge {
-  font-size: 0.85em;
-  padding: 0.5em 0.6em;
-  min-width: 40px;
+  font-size: 0.9em;
+  font-weight: 600;
+  padding: 0.5em 0.8em;
+  min-width: 50px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border-radius: 0.5rem;
   transition: all 0.2s ease-in-out;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  border: 1px solid transparent;
 }
 
 .badge:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-/* Couleurs personnalisées pour les notes */
-.bg-success {
-  background-color: #19875415 !important;
-  color: #198754 !important;
-  border: 1px solid #19875440 !important;
+/* Couleurs des notes */
+.note-excellente {
+  background-color: #19875415;
+  color: #198754;
+  border-color: #19875440;
 }
 
-.bg-warning {
-  background-color: #ffc10715 !important;
-  color: #ffc107 !important;
-  border: 1px solid #ffc10740 !important;
+.note-bonne {
+  background-color: #20c99715;
+  color: #20c997;
+  border-color: #20c99740;
 }
 
-.bg-danger {
-  background-color: #dc354515 !important;
-  color: #dc3545 !important;
-  border: 1px solid #dc354540 !important;
+.note-moyenne {
+  background-color: #ffc10715;
+  color: #ffc107;
+  border-color: #ffc10740;
+}
+
+.note-faible {
+  background-color: #fd7e1415;
+  color: #fd7e14;
+  border-color: #fd7e1440;
+}
+
+.note-insuffisante {
+  background-color: #dc354515;
+  color: #dc3545;
+  border-color: #dc354540;
+}
+
+/* Moyenne et appréciation */
+.moyenne-container {
+  background: #f8f9fa;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  margin-top: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.moyenne-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #2c3e50;
+}
+
+.appreciation {
+  font-style: italic;
+  color: #4a5568;
+  text-align: right;
+  flex: 1;
+  padding: 0.75rem 1.25rem;
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: 0.5rem;
+  margin: 0.5rem 0;
+  border-left: 3px solid var(--bulletin-accent1);
+  transition: all 0.3s ease;
+}
+
+.appreciation {
+  min-width: 200px;
+  font-style: italic;
+  color: #4a5568;
+  text-align: right;
+  padding: 0.75rem 1.25rem;
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: 0.5rem;
+  margin: 0.5rem 0;
+  border-left: 3px solid var(--bulletin-accent1);
+  transition: all 0.3s ease;
+}
+
+.appreciation:hover {
+  background: rgba(0, 0, 0, 0.03);
+  transform: translateX(4px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+/* Pagination */
+.pagination-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 2rem;
+  padding: 1rem 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .eleve-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .moyenne-container {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .appreciation {
+    text-align: center;
+    margin-top: 0.5rem;
+  }
 }
 
 /* Styles pour les moyennes */

@@ -57,7 +57,7 @@
           </div>
         </div>
         <div *ngIf="elevesNotes.length > 0" class="mt-2">
-          <button class="btn btn-sm btn-outline-secondary" (click)="console.log('elevesNotes:', elevesNotes)">
+          <button class="btn btn-sm btn-outline-secondary" (click)="logToConsole()">
             <i class="fas fa-code me-1"></i> Afficher les données brutes dans la console
           </button>
         </div>
@@ -113,11 +113,7 @@
             <div class="d-flex align-items-center ms-4">
               <div class="text-center px-3">
                 <div class="text-uppercase small text-muted">Moyenne</div>
-                <div class="h3 mb-0 fw-bold" [ngClass]="{
-                  'text-success': calculateMoyenneGenerale(eleve) >= 10,
-                  'text-warning': calculateMoyenneGenerale(eleve) < 10 && calculateMoyenneGenerale(eleve) >= 8,
-                  'text-danger': calculateMoyenneGenerale(eleve) < 8
-                }">
+                <div class="h3 mb-0 fw-bold" [class]="getMoyenneClass(calculateMoyenneGenerale(eleve))">
                   {{ calculateMoyenneGenerale(eleve) | number:'1.2-2' }}
                   <small class="text-muted">/20</small>
                 </div>
@@ -217,12 +213,7 @@
                               <i *ngIf="calculateMoyenneMatiere(matiereNotes.notes) < 10 && calculateMoyenneMatiere(matiereNotes.notes) >= 8" class="fas fa-exclamation-circle text-warning"></i>
                               <i *ngIf="calculateMoyenneMatiere(matiereNotes.notes) < 8" class="fas fa-times-circle text-danger"></i>
                             </div>
-                            <span class="fw-bold fs-5 px-2" [ngClass]="{
-                              'text-success': calculateMoyenneMatiere(matiereNotes.notes) >= 10,
-                              'text-warning': calculateMoyenneMatiere(matiereNotes.notes) < 10 && 
-                                            calculateMoyenneMatiere(matiereNotes.notes) >= 8,
-                              'text-danger': calculateMoyenneMatiere(matiereNotes.notes) < 8
-                            }">
+                            <span class="fw-bold fs-5 px-2" [class]="getMoyenneClass(calculateMoyenneMatiere(matiereNotes.notes))">
                               {{ calculateMoyenneMatiere(matiereNotes.notes) | number:'1.2-2' }}
                             </span>
                           </div>
@@ -231,12 +222,7 @@
                       </td>
                       <td class="text-center">
                         <div class="d-flex flex-column">
-                          <span class="small fw-medium" [ngClass]="{
-                            'text-success': calculateMoyenneMatiere(matiereNotes.notes) >= 10,
-                            'text-warning': calculateMoyenneMatiere(matiereNotes.notes) < 10 && 
-                                          calculateMoyenneMatiere(matiereNotes.notes) >= 8,
-                            'text-danger': calculateMoyenneMatiere(matiereNotes.notes) < 8
-                          }">
+                          <span class="small fw-medium" [class]="getMoyenneClass(calculateMoyenneMatiere(matiereNotes.notes))">
                             <i class="fas fa-quote-left me-1 small"></i>
                             {{ getAppreciation(calculateMoyenneMatiere(matiereNotes.notes)) }}
                             <i class="fas fa-quote-right ms-1 small"></i>
@@ -276,25 +262,14 @@
                     </td>
                     <td class="text-center">
                       <div class="d-flex flex-column align-items-center">
-                        <span class="fw-bold fs-4" [ngClass]="{
-                          'text-success': calculateMoyenneGenerale(eleve) >= 10,
-                          'text-warning': calculateMoyenneGenerale(eleve) < 10 && 
-                                        calculateMoyenneGenerale(eleve) >= 8,
-                          'text-danger': calculateMoyenneGenerale(eleve) < 8
-                        }">
+                        <span class="fw-bold fs-4" [class]="getMoyenneClass(calculateMoyenneGenerale(eleve))">
                           {{ calculateMoyenneGenerale(eleve) | number:'1.2-2' }}
                         </span>
                         <small class="text-muted">/20</small>
                       </div>
                     </td>
                     <td class="text-center">
-                      <span class="badge" [ngClass]="{
-                        'bg-success bg-opacity-10 text-success border border-success': calculateMoyenneGenerale(eleve) >= 10,
-                        'bg-warning bg-opacity-10 text-warning border border-warning': calculateMoyenneGenerale(eleve) < 10 && 
-                                                                                   calculateMoyenneGenerale(eleve) >= 8,
-                        'bg-danger bg-opacity-10 text-danger border border-danger': calculateMoyenneGenerale(eleve) < 8,
-                        'p-2': true
-                      }">
+                      <span class="badge p-2" [class]="getMoyenneClass(calculateMoyenneGenerale(eleve))">
                         {{ getAppreciation(calculateMoyenneGenerale(eleve)) }}
                       </span>
                     </td>
@@ -392,3 +367,280 @@
     </div>
   </div>
 </div>
+
+<!-- Modal de bulletin -->
+<div class="modal fade" id="bulletinModal" tabindex="-1" aria-labelledby="bulletinModalLabel" aria-hidden="true" [class.show]="showBulletinModal" [style.display]="showBulletinModal ? 'block' : 'none'" style="background-color: rgba(255,255,255,0.9);">
+  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+    <div #bulletinContent class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="fas fa-file-alt me-2"></i>BULLETIN SCOLAIRE
+        </h5>
+        <button type="button" class="btn-close btn-close-white" (click)="fermerBulletin()" aria-label="Fermer"></button>
+      </div>
+      <div class="modal-body" *ngIf="selectedEleveForBulletin">
+        <!-- En-tête du bulletin -->
+        <div class="text-center mb-4">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <div class="text-start" style="width: 150px;">
+              <div class="p-3 border rounded" style="border-color: var(--bulletin-secondary) !important;">
+                <small class="d-block fw-bold text-uppercase" style="font-size: 0.7rem; color: var(--bulletin-dark);">N° Matricule</small>
+                <strong class="d-block text-center" style="font-size: 1.1rem; color: var(--bulletin-primary);">{{ selectedEleveForBulletin.matricule || '-' }}</strong>
+              </div>
+            </div>
+            <div class="text-center">
+              <h4 class="mb-1" style="color: var(--bulletin-dark);">RÉPUBLIQUE DU SÉNÉGAL</h4>
+              <h5 class="mb-1" style="color: var(--bulletin-primary);">Ministère de l'Éducation Nationale</h5>
+              <h6 class="mb-0" style="color: var(--bulletin-dark);">Année Scolaire 2023/2024</h6>
+            </div>
+            <div style="width: 150px;">
+              <!-- Espace vide pour équilibrer la mise en page -->
+            </div>
+          </div>
+          <h3 class="mb-1" style="color: var(--bulletin-dark);">BULLETIN DE NOTES</h3>
+          <div class="py-2 my-2" style="border-top: 2px solid var(--bulletin-accent1); border-bottom: 2px solid var(--bulletin-accent1);">
+            <h5 class="mb-0" style="color: var(--bulletin-primary);">{{ getCurrentTrimestre() | uppercase }} TRIMESTRE</h5>
+          </div>
+        </div>
+
+        <!-- Informations de l'élève -->
+        <div class="card mb-4 border-0" style="background-color: rgba(10, 129, 162, 0.05);">
+          <div class="card-body p-4">
+            <div class="row">
+              <div class="col-md-6">
+                <div class="d-flex align-items-center mb-2">
+                  <i class="fas fa-user me-2" style="color: var(--bulletin-primary);"></i>
+                  <div>
+                    <span class="fw-bold me-2" style="color: var(--bulletin-dark);">Nom :</span>
+                    <span>{{ selectedEleveForBulletin.nom | uppercase }}</span>
+                  </div>
+                </div>
+                <div class="d-flex align-items-center mb-2">
+                  <i class="fas fa-user me-2" style="color: var(--bulletin-primary);"></i>
+                  <div>
+                    <span class="fw-bold me-2" style="color: var(--bulletin-dark);">Prénom :</span>
+                    <span>{{ selectedEleveForBulletin.prenom }}</span>
+                  </div>
+                </div>
+                <div class="d-flex align-items-center">
+                  <i class="fas fa-birthday-cake me-2" style="color: var(--bulletin-primary);"></i>
+                  <div>
+                    <span class="fw-bold me-2" style="color: var(--bulletin-dark);">Date de naissance :</span>
+                    <span>{{ selectedEleveForBulletin.date_naissance ? (selectedEleveForBulletin.date_naissance | date:'dd/MM/yyyy') : 'Non renseignée' }}</span>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="d-flex align-items-center mb-2">
+                  <i class="fas fa-graduation-cap me-2" style="color: var(--bulletin-primary);"></i>
+                  <div>
+                    <span class="fw-bold me-2" style="color: var(--bulletin-dark);">Classe :</span>
+                    <span>{{ selectedEleveForBulletin.classe.nom }} ({{ selectedEleveForBulletin.classe.niveau }})</span>
+                  </div>
+                </div>
+                <div class="d-flex align-items-center mb-2">
+                  <i class="fas fa-id-card me-2" style="color: var(--bulletin-primary);"></i>
+                  <div>
+                    <span class="fw-bold me-2" style="color: var(--bulletin-dark);">Matricule :</span>
+                    <span>{{ selectedEleveForBulletin.matricule || 'Non renseigné' }}</span>
+                  </div>
+                </div>
+                <div class="d-flex align-items-center">
+                  <i class="fas fa-users me-2" style="color: var(--bulletin-primary);"></i>
+                  <div>
+                    <span class="fw-bold me-2" style="color: var(--bulletin-dark);">Effectif de la classe :</span>
+                    <span>{{ elevesNotes.length }} élèves</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Notes par matière -->
+        <div class="table-responsive mb-4">
+          <table class="table">
+            <thead>
+              <tr>
+                <th class="text-center" style="background-color: var(--bulletin-dark); color: white;">Matières</th>
+                <th class="text-center" style="width: 80px; background-color: var(--bulletin-dark); color: white;">Coef</th>
+                <th class="text-center" style="width: 120px; background-color: var(--bulletin-dark); color: white;">Moyenne</th>
+                <th class="text-center" style="width: 200px; background-color: var(--bulletin-dark); color: white;">Appréciation</th>
+              </tr>
+            </thead>
+            <tbody>
+              <ng-container *ngFor="let matiereNotes of groupNotesByMatiere(selectedEleveForBulletin.notes); let i = index">
+                <tr [ngClass]="{'bg-light': i % 2 === 0}">
+                  <td>
+                    <div class="d-flex align-items-center">
+                      <div class="me-2 d-flex align-items-center justify-content-center" style="width: 30px; height: 30px; background-color: var(--bulletin-accent1); border-radius: 50%;">
+                        <span class="fw-bold" style="color: var(--bulletin-dark);">{{ i + 1 }}</span>
+                      </div>
+                      <div>
+                        <strong style="color: var(--bulletin-dark);">{{ matiereNotes.matiere.nom | uppercase }}</strong>
+                        <div *ngIf="matiereNotes.matiere.enseignant" class="small" style="color: var(--bulletin-primary);">
+                          <i class="fas fa-chalkboard-teacher me-1"></i>
+                          {{ matiereNotes.matiere.enseignant.prenom }} {{ matiereNotes.matiere.enseignant.nom | uppercase }}
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="text-center align-middle" style="font-weight: 600; color: var(--bulletin-dark);">
+                    {{ matiereNotes.matiere.coefficient }}
+                  </td>
+                  <td class="text-center align-middle" style="font-weight: 700; font-size: 1.1rem;">
+                    <span [style.color]="getMoyenneColor(calculateMoyenneMatiere(matiereNotes.notes))">
+                      {{ calculateMoyenneMatiere(matiereNotes.notes) | number:'1.2-2' }}
+                    </span>
+                    <div class="small" style="color: var(--bulletin-primary);">
+                      Rang: {{ getRangMatiere(matiereNotes.matiere.id) || '-' }}
+                    </div>
+                  </td>
+                  <td class="text-center align-middle">
+                    <span class="appreciation-badge" [style.background-color]="getAppreciationColor(calculateMoyenneMatiere(matiereNotes.notes))" [style.color]="'#000'">
+                      {{ getAppreciation(calculateMoyenneMatiere(matiereNotes.notes)) }}
+                    </span>
+                  </td>
+                </tr>
+              </ng-container>
+              <!-- Ligne de la moyenne générale -->
+              <tr style="background-color: var(--bulletin-secondary);">
+                <td class="text-end fw-bold" style="color: var(--bulletin-dark); font-size: 1.1rem;">
+                  <i class="fas fa-calculator me-2"></i>MOYENNE GÉNÉRALE
+                </td>
+                <td class="text-center fw-bold" style="color: var(--bulletin-dark); font-size: 1.1rem;">
+                  {{ getTotalCoefficients(selectedEleveForBulletin.notes) }}
+                </td>
+                <td class="text-center fw-bold" style="font-size: 1.4rem;">
+                  <span [style.color]="getMoyenneColor(calculateMoyenneGenerale(selectedEleveForBulletin))">
+                    {{ calculateMoyenneGenerale(selectedEleveForBulletin) | number:'1.2-2' }}
+                  </span>
+                </td>
+                <td class="text-center">
+                  <span class="appreciation-badge" [style.background-color]="getAppreciationColor(calculateMoyenneGenerale(selectedEleveForBulletin))" [style.color]="'#000'" style="font-size: 0.9rem; padding: 0.4em 1em;">
+                    <i class="fas fa-trophy me-1"></i>
+                    {{ getAppreciation(calculateMoyenneGenerale(selectedEleveForBulletin)) }}
+                  </span>
+                  <div class="mt-1 small" style="color: var(--bulletin-dark);">
+                    Rang: {{ getRangGeneral() || '-' }}
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Appréciations et mentions -->
+        <div class="row mt-5">
+          <div class="col-md-6">
+            <div class="card h-100 border-0 shadow-sm">
+              <div class="card-header" style="background-color: var(--bulletin-accent1); color: var(--bulletin-dark); font-weight: 600;">
+                <i class="fas fa-comment-dots me-2"></i> APPRÉCIATIONS DES PROFESSEURS
+              </div>
+              <div class="card-body p-0">
+                <ul class="list-group list-group-flush">
+                  <li *ngFor="let matiereNotes of groupNotesByMatiere(selectedEleveForBulletin.notes)" class="list-group-item border-0 py-3">
+                    <div class="d-flex align-items-start">
+                      <div class="me-3 d-flex align-items-center justify-content-center rounded-circle" style="width: 36px; height: 36px; background-color: var(--bulletin-accent2);">
+                        <i class="fas fa-book" style="color: var(--bulletin-dark);"></i>
+                      </div>
+                      <div class="flex-grow-1">
+                        <div class="d-flex justify-content-between align-items-center">
+                          <h6 class="mb-1 fw-bold" style="color: var(--bulletin-dark);">{{ matiereNotes.matiere.nom | uppercase }}</h6>
+                          <span class="badge" [style.background-color]="getAppreciationColor(calculateMoyenneMatiere(matiereNotes.notes))" [style.color]="'#000'">
+                            {{ getAppreciation(calculateMoyenneMatiere(matiereNotes.notes)) }}
+                          </span>
+                        </div>
+                        <p class="mb-0 mt-1" style="color: var(--bulletin-dark);">
+                          {{ getDetailedAppreciation(calculateMoyenneMatiere(matiereNotes.notes)) }}
+                        </p>
+                        <div class="mt-2 small" *ngIf="matiereNotes.matiere.enseignant" style="color: var(--bulletin-primary);">
+                          <i class="fas fa-user-tie me-1"></i>
+                          {{ matiereNotes.matiere.enseignant.prenom }} {{ matiereNotes.matiere.enseignant.nom | uppercase }}
+                        </div>
+                      </div>
+                    </div>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card h-100 border-0 shadow-sm">
+              <div class="card-header d-flex justify-content-between align-items-center" style="background-color: var(--bulletin-accent2); color: var(--bulletin-dark); font-weight: 600;">
+                <div>
+                  <i class="fas fa-clipboard-check me-2"></i> DÉCISION DU CONSEIL DE CLASSE
+                </div>
+                <span class="badge" [style.background-color]="getAppreciationColor(calculateMoyenneGenerale(selectedEleveForBulletin))" [style.color]="'#000'">
+                  {{ getAppreciation(calculateMoyenneGenerale(selectedEleveForBulletin)) }}
+                </span>
+              </div>
+              <div class="card-body">
+                <div class="form-floating mb-3">
+                  <textarea class="form-control" 
+                            placeholder="Appréciation du conseil de classe" 
+                            [(ngModel)]="selectedEleveForBulletin.appreciation" 
+                            style="height: 180px; border: 1px solid var(--bulletin-secondary);"></textarea>
+                  <label style="color: var(--bulletin-primary);">Appréciation générale</label>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mt-4">
+                  <div class="text-center">
+                    <div class="small mb-1" style="color: var(--bulletin-primary);">Le Directeur</div>
+                    <div class="signature-line"></div>
+                  </div>
+                  <div class="text-center">
+                    <div class="small mb-1" style="color: var(--bulletin-primary);">Le Professeur Principal</div>
+                    <div class="signature-line"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Légende des notes -->
+        <div class="mt-4 p-3 rounded" style="background-color: rgba(148, 200, 189, 0.2);">
+          <h6 class="mb-3 text-center fw-bold" style="color: var(--bulletin-dark);">LÉGENDE DES APPRÉCIATIONS</h6>
+          <div class="d-flex flex-wrap justify-content-center gap-4">
+            <div class="d-flex align-items-center">
+              <span class="badge me-2" style="background-color: var(--bulletin-accent1); color: #000; min-width: 80px;">16-20</span>
+              <span style="color: var(--bulletin-dark);">Excellent</span>
+            </div>
+            <div class="d-flex align-items-center">
+              <span class="badge me-2" style="background-color: var(--bulletin-accent2); color: #000; min-width: 80px;">14-15.99</span>
+              <span style="color: var(--bulletin-dark);">Très bien</span>
+            </div>
+            <div class="d-flex align-items-center">
+              <span class="badge me-2" style="background-color: #F8C7B0; color: #000; min-width: 80px;">12-13.99</span>
+              <span style="color: var(--bulletin-dark);">Bien</span>
+            </div>
+            <div class="d-flex align-items-center">
+              <span class="badge me-2" style="background-color: #F09CA5; color: #000; min-width: 80px;">10-11.99</span>
+              <span style="color: var(--bulletin-dark);">Assez bien</span>
+            </div>
+            <div class="d-flex align-items-center">
+              <span class="badge me-2" style="background-color: #094A5C; color: white; min-width: 80px;">0-9.99</span>
+              <span style="color: var(--bulletin-dark);">Insuffisant</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer" style="border-top: 2px solid var(--bulletin-secondary);">
+        <div class="d-flex justify-content-between w-100 align-items-center">
+          <div class="text-muted small">
+            <i class="fas fa-calendar-alt me-1"></i> Émis le {{ today | date:'dd/MM/yyyy' }}
+          </div>
+          <div>
+            <button type="button" class="btn me-2" (click)="fermerBulletin()" style="background-color: var(--bulletin-accent2); color: var(--bulletin-dark);">
+              <i class="fas fa-times me-1"></i> Fermer
+            </button>
+            <button type="button" class="btn" (click)="telechargerBulletinPdf()" style="background-color: var(--bulletin-primary); color: white;">
+              <i class="fas fa-download me-1"></i> Télécharger le PDF
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop fade show" *ngIf="showBulletinModal" (click)="fermerBulletin()"></div>

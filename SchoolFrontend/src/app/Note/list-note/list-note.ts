@@ -1,10 +1,13 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgbPaginationModule, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { Router, RouterModule } from '@angular/router';
 import { NoteService, NoteDetaillee } from '../../Service/note.service';
-// Installation requise : npm install xlsx @types/xlsx
+import { jsPDF } from 'jspdf';
+import html2canvas from 'html2canvas';
+import * as XLSX from 'xlsx';
+// Installation requise : npm install xlsx @types/xlsx jspdf html2canvas
 
 interface EleveWithNotes {
   id: number;
@@ -58,6 +61,9 @@ interface MatiereNotes {
   styleUrls: ['./list-note.css']
 })
 export class ListNote implements OnInit {
+  // Référence à l'élément HTML du bulletin pour le téléchargement PDF
+  @ViewChild('bulletinContent') bulletinContent!: ElementRef;
+  
   // Données
   notes: NoteDetaillee[] = [];
   elevesNotes: EleveWithNotes[] = [];
@@ -92,6 +98,10 @@ export class ListNote implements OnInit {
   // Chargement
   isLoading = false;
   errorMessage = '';
+
+  // Propriétés pour la modale de bulletin
+  showBulletinModal = false;
+  selectedEleveForBulletin: EleveWithNotes | null = null;
 
   constructor(
     private noteService: NoteService,
@@ -235,6 +245,23 @@ export class ListNote implements OnInit {
   // La méthode onEleveChange a été supprimée car elle n'est plus nécessaire
   // avec le nouveau système de recherche par texte
 
+  // Méthode pour afficher les données dans la console
+  logToConsole(): void {
+    console.log('=== DONNÉES DES ÉLÈVES ===');
+    console.log('Nombre d\'élèves:', this.elevesNotes.length);
+    console.log('Détail des élèves:', this.elevesNotes);
+    
+    if (this.elevesNotes.length > 0) {
+      console.log('\n=== DÉTAIL DU PREMIER ÉLÈVE ===');
+      console.log('Nom:', this.elevesNotes[0].nom, this.elevesNotes[0].prenom);
+      console.log('Nombre de notes:', this.elevesNotes[0].notes?.length || 0);
+      console.log('Détail des notes:', this.elevesNotes[0].notes);
+    }
+    
+    console.log('\n=== DONNÉES BRUTES ===');
+    console.log('Notes brutes:', this.notes);
+  }
+
   // Méthodes utilitaires pour les calculs
   
   // Convertit une valeur de note en nombre de manière sécurisée
@@ -249,11 +276,22 @@ export class ListNote implements OnInit {
   // Retourne la classe CSS appropriée pour une note
   getNoteClass(noteValue: any): string {
     const value = this.safeNoteValue(noteValue);
-    if (value === null) return 'border border-2';
+    if (value === null) return '';
     
-    if (value >= 10) return 'bg-success bg-opacity-10 text-success border border-2';
-    if (value >= 8) return 'bg-warning bg-opacity-10 text-warning border border-2';
-    return 'bg-danger bg-opacity-10 text-danger border border-2';
+    if (value >= 16) return 'note-excellente';
+    if (value >= 14) return 'note-bonne';
+    if (value >= 12) return 'note-moyenne';
+    if (value >= 10) return 'note-faible';
+    return 'note-insuffisante';
+  }
+
+  // Retourne la classe CSS appropriée pour une moyenne
+  getMoyenneClass(moyenne: number): string {
+    if (moyenne >= 16) return 'note-excellente';
+    if (moyenne >= 14) return 'note-bonne';
+    if (moyenne >= 12) return 'note-moyenne';
+    if (moyenne >= 10) return 'note-faible';
+    return 'note-insuffisante';
   }
   calculateMoyenneMatiere(notes: NoteDetaillee[]): number {
     if (!notes || notes.length === 0) return 0;
@@ -338,12 +376,20 @@ export class ListNote implements OnInit {
     return Array.from(matieresMap.values());
   }
 
+  /**
+   * Retourne le libellé du trimestre actuellement sélectionné
+   * @returns Le libellé du trimestre (ex: "1er Trimestre", "2ème Trimestre", etc.)
+   */
   getCurrentTrimestre(): string {
     switch (this.selectedTrimestre) {
-      case 1: return '1er Trimestre';
-      case 2: return '2ème Trimestre';
-      case 3: return '3ème Trimestre';
-      default: return '';
+      case 1:
+        return '1er Trimestre';
+      case 2:
+        return '2ème Trimestre';
+      case 3:
+        return '3ème Trimestre';
+      default:
+        return `${this.selectedTrimestre}ème Trimestre`;
     }
   }
 
@@ -380,48 +426,202 @@ export class ListNote implements OnInit {
    * Affiche le bulletin complet d'un élève
    * @param eleve L'élève dont on veut voir le bulletin
    */
+  /**
+   * Ouvre la modale de bulletin pour un élève
+   * @param eleve L'élève dont on veut voir le bulletin
+   */
   voirBulletinComplet(eleve: EleveWithNotes): void {
-    if (eleve.id) {
-      // Vérifier si l'élève a déjà un bulletin généré
-      // Ici, vous pourriez ajouter une vérification supplémentaire
-      // pour voir si un bulletin existe déjà pour cet élève, ce trimestre et cette année scolaire
-      
-      // Pour l'instant, on redirige simplement vers la page de génération du bulletin
-      // avec les paramètres nécessaires
-      this.router.navigate(['/bulletins/generer'], {
-        queryParams: {
-          eleveId: eleve.id,
-          trimestre: this.selectedTrimestre,
-          // Ajoutez d'autres paramètres nécessaires comme l'année scolaire
-        }
-      });
+    if (eleve) {
+      this.selectedEleveForBulletin = eleve;
+      this.showBulletinModal = true;
+      // Forcer la mise à jour de la vue
+      setTimeout(() => {
+        this.scrollToTop();
+      }, 100);
     } else {
-      console.error('Impossible de générer le bulletin : ID élève manquant');
-      alert('Impossible de générer le bulletin : informations manquantes');
+      console.error('Impossible d\'afficher le bulletin : informations manquantes');
+      alert('Impossible d\'afficher le bulletin : informations manquantes');
     }
   }
 
-  exportToExcel(): void {
-    // Désactiver temporairement l'export Excel car nécessite l'installation de xlsx
-    alert('L\'export Excel nécessite l\'installation du package xlsx. Exécutez: npm install xlsx @types/xlsx');
-    
-    /* Code commenté jusqu'à installation de xlsx
-    const data = this.filteredEleves.map(eleve => ({
-      'Matricule': eleve.matricule || '',
-      'Nom': eleve.nom,
-      'Prénom': eleve.prenom,
-      'Classe': `${eleve.classe.nom} (${eleve.classe.niveau})`,
-      'Moyenne Générale': this.calculateMoyenneGenerale(eleve).toFixed(2),
-      'Appréciation': this.getAppreciation(this.calculateMoyenneGenerale(eleve)),
-      'Rang': eleve.rang || 'N/A'
-    }));
+  /**
+   * Ferme la modale de bulletin
+   */
+  fermerBulletin(): void {
+    this.showBulletinModal = false;
+    this.selectedEleveForBulletin = null;
+  }
 
-    const ws: XLSX.WorkSheet = XLSX.utils.json_to_sheet(data);
-    const wb: XLSX.WorkBook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Notes_Élèves');
+  /**
+   * Fait défiler la page vers le haut
+   */
+  private scrollToTop(): void {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  /**
+   * Télécharge le bulletin au format PDF
+   */
+
+  // Méthode pour obtenir la couleur en fonction de la moyenne
+  getMoyenneColor(moyenne: number): string {
+    if (moyenne >= 16) return '#0A81A2'; // Excellent
+    if (moyenne >= 14) return '#94C8BD'; // Très bien
+    if (moyenne >= 12) return '#F8C7B0'; // Bien
+    if (moyenne >= 10) return '#F09CA5'; // Assez bien
+    return '#094A5C'; // Insuffisant
+  }
+
+  // Méthode pour obtenir la couleur de fond de l'appréciation
+  getAppreciationColor(moyenne: number): string {
+    if (moyenne >= 16) return '#94C8BD'; // Excellent
+    if (moyenne >= 14) return '#F8C7B0'; // Très bien
+    if (moyenne >= 12) return '#F09CA5'; // Bien
+    if (moyenne >= 10) return '#F8C7B0'; // Assez bien
+    return '#094A5C'; // Insuffisant
+  }
+
+  // Méthode pour obtenir une appréciation détaillée
+  getDetailedAppreciation(moyenne: number): string {
+    if (moyenne >= 16) return 'Excellent travail, félicitations pour vos excellents résultats !';
+    if (moyenne >= 14) return 'Très bon travail, continuez vos efforts !';
+    if (moyenne >= 12) return 'Bon travail, vous pouvez encore progresser.';
+    if (moyenne >= 10) return 'Résultats satisfaisants, mais des efforts restent à fournir.';
+    return 'Des difficultés importantes, un travail sérieux de remise à niveau est nécessaire.';
+  }
+
+  // Méthode pour obtenir le rang dans une matière spécifique
+  getRangMatiere(matiereId: number): string {
+    // Implémentez la logique pour obtenir le rang dans la matière
+    // Par exemple, trier les élèves par note dans cette matière et retourner le rang
+    return '1er'; // Valeur factice pour l'exemple
+  }
+
+  // Méthode pour obtenir le rang général
+  getRangGeneral(): string {
+    // Implémentez la logique pour obtenir le rang général
+    // Par exemple, trier les élèves par moyenne générale et retourner le rang
+    return '1er'; // Valeur factice pour l'exemple
+  }
+
+  // Méthode pour exporter les données des élèves vers Excel
+  exportToExcel(): void {
+    // Vérifier si la bibliothèque XLSX est disponible
+    if (typeof XLSX === 'undefined') {
+      alert('La fonctionnalité d\'export Excel nécessite l\'installation du package xlsx. Exécutez: npm install xlsx @types/xlsx');
+      return;
+    }
+
+    try {
+      // Préparer les données pour l'export
+      const data = this.filteredEleves.map(eleve => ({
+        'Matricule': eleve.matricule || '',
+        'Nom': eleve.nom,
+        'Prénom': eleve.prenom,
+        'Classe': `${eleve.classe.nom} (${eleve.classe.niveau})`,
+        'Moyenne Générale': this.calculateMoyenneGenerale(eleve).toFixed(2),
+        'Appréciation': this.getAppreciation(this.calculateMoyenneGenerale(eleve)),
+        'Rang': eleve.rang || 'N/A'
+      }));
+
+      // Créer une feuille de calcul
+      const ws = XLSX.utils.json_to_sheet(data);
+      
+      // Créer un nouveau classeur
+      const wb = XLSX.utils.book_new();
+      
+      // Ajouter la feuille de calcul au classeur
+      XLSX.utils.book_append_sheet(wb, ws, 'Notes_Élèves');
+      
+      // Générer le fichier Excel
+      XLSX.writeFile(wb, `export_notes_${new Date().toISOString().split('T')[0]}.xlsx`);
+      
+    } catch (error) {
+      console.error('Erreur lors de l\'export Excel :', error);
+      alert('Une erreur est survenue lors de l\'export des données.');
+    }
+  }
+
+  // Méthode pour télécharger le bulletin en PDF
+  async telechargerBulletinPdf() {
+    if (!this.selectedEleveForBulletin) return;
     
-    // Générer le fichier Excel
-    XLSX.writeFile(wb, `notes_eleves_${new Date().toISOString().split('T')[0]}.xlsx`);
-    */
+    // Afficher un message de chargement
+    const loadingMessage = document.createElement('div');
+    loadingMessage.textContent = 'Génération du PDF en cours...';
+    loadingMessage.style.position = 'fixed';
+    loadingMessage.style.top = '50%';
+    loadingMessage.style.left = '50%';
+    loadingMessage.style.transform = 'translate(-50%, -50%)';
+    loadingMessage.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+    loadingMessage.style.color = 'white';
+    loadingMessage.style.padding = '15px 30px';
+    loadingMessage.style.borderRadius = '5px';
+    loadingMessage.style.zIndex = '9999';
+    document.body.appendChild(loadingMessage);
+
+    try {
+      // Récupérer l'élément du contenu du bulletin
+      const element = this.bulletinContent.nativeElement;
+      
+      // Créer un clone de l'élément pour la capture
+      const elementToPrint = element.cloneNode(true);
+      
+      // Masquer les boutons d'action dans le clone
+      const buttons = elementToPrint.querySelectorAll('button');
+      buttons.forEach((button: HTMLElement) => {
+        button.style.display = 'none';
+      });
+      
+      // Créer un conteneur temporaire pour le clone
+      const printContainer = document.createElement('div');
+      printContainer.style.position = 'fixed';
+      printContainer.style.left = '-9999px';
+      printContainer.appendChild(elementToPrint);
+      document.body.appendChild(printContainer);
+      
+      // Capturer le contenu avec html2canvas
+      const canvas = await html2canvas(elementToPrint as HTMLElement, {
+        scale: 2, // Augmenter la qualité
+        logging: false,
+        useCORS: true,
+        allowTaint: true,
+        scrollX: 0,
+        scrollY: 0,
+        windowWidth: elementToPrint.scrollWidth,
+        windowHeight: elementToPrint.scrollHeight
+      });
+      
+      // Nettoyer le conteneur temporaire
+      document.body.removeChild(printContainer);
+      
+      // Créer un nouveau PDF avec la bonne orientation et taille
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
+      
+      // Calculer les dimensions pour ajuster l'image au format A4
+      const imgData = canvas.toDataURL('image/png');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      
+      // Ajouter l'image au PDF
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      
+      // Télécharger le PDF
+      const fileName = `bulletin_${this.selectedEleveForBulletin.nom}_${this.selectedEleveForBulletin.prenom}_${new Date().toISOString().split('T')[0]}.pdf`;
+      pdf.save(fileName);
+      
+    } catch (error) {
+      console.error('Erreur lors de la génération du PDF :', error);
+      alert('Une erreur est survenue lors de la génération du PDF. Veuillez réessayer.');
+    } finally {
+      // Supprimer le message de chargement
+      if (document.body.contains(loadingMessage)) {
+        document.body.removeChild(loadingMessage);
+      }
+    }
   }
 }
