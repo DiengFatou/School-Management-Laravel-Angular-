@@ -1,0 +1,480 @@
+/* Import Font Awesome pour les icônes */
+@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css');
+
+/* Variables CSS - Design professionnel */
+:root {
+  --primary-color: #2563EB; /* Bleu professionnel */
+  --primary-hover: #1D4ED8; /* Bleu plus foncé */
+  --secondary-color: #64748B; /* Gris professionnel */
+  --success-color: #059669; /* Vert professionnel */
+  --error-color: #DC2626; /* Rouge professionnel */
+  --text-primary: #1E293B; /* Gris foncé */
+  --text-secondary: #64748B; /* Gris moyen */
+  --border-color: #E2E8F0; /* Gris clair */
+  --background-light: #F8FAFC; /* Gris très clair */
+  --white: #FFFFFF;
+  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+/* Reset et base */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  width: 100vw;
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+  overflow: hidden !important;
+  box-sizing: border-box;
+}
+
+.login-container {
+  display: flex;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  min-height: 100vh;
+  overflow: hidden !important;
+  box-sizing: border-box;
+  z-index: 1000;
+}
+
+.left-panel, .right-panel {
+  height: 100vh;
+  min-height: 100vh;
+  overflow: hidden !important;
+  box-sizing: border-box;
+}
+
+/* Pour éviter tout débordement horizontal */
+* {
+  box-sizing: border-box;
+}
+
+:host {
+  display: block;
+  width: 100%;
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+/* Container principal - Split Screen */
+.login-container {
+  display: flex;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Panneau gauche - Photo de l'élève */
+/* Image rectangle à gauche */
+.left-panel {
+  flex: 0 0 60%;
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  justify-content: stretch;
+  min-height: 100vh;
+  overflow: hidden;
+  background: none;
+}
+
+.left-bg-image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 1;
+}
+
+.left-overlay {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 40px 40px 32px 40px;
+  background: linear-gradient(90deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.01) 100%);
+}
+
+.left-content {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 40px;
+  position: relative;
+  z-index: 2;
+}
+
+/* Logo section */
+.logo-section {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: white;
+  font-size: 1.5rem;
+  font-weight: 700;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.25);
+}
+
+.logo i {
+  font-size: 2rem;
+  color: #FFD700;
+  filter: drop-shadow(1px 1px 2px rgba(0, 0, 0, 0.2));
+}
+
+/* Illustration section avec photo */
+.illustration-section {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.main-illustration {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Photo de l'élève */
+.student-photo {
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  position: relative;
+  z-index: 3;
+}
+
+/* Copyright */
+.copyright {
+  color: rgba(255, 255, 255, 0.95);
+  font-size: 0.95rem;
+  text-align: left;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.25);
+}
+
+/* Panneau droit - Formulaire professionnel */
+.right-panel {
+  flex: 0 0 40%;
+  background: var(--white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  min-height: 100vh;
+  overflow: hidden !important;
+  box-sizing: border-box;
+  padding: 0;
+}
+
+.form-container {
+  margin-top: 0 !important;
+  max-height: 100vh;
+  overflow: auto;
+}
+
+/* Amélioration du formulaire */
+.form-container {
+  width: 100%;
+  max-width: 400px;
+  background: linear-gradient(135deg, #f8fafc 80%, #f8c7b0 100%);
+  border-radius: 18px;
+  box-shadow: 0 8px 32px rgba(148, 200, 189, 0.15), 0 1.5px 8px rgba(240, 156, 165, 0.08);
+  padding: 40px 32px 32px 32px;
+  border: 3px solid #94C8BD;
+  position: relative;
+}
+
+.form-header {
+  text-align: center;
+  margin-bottom: 32px;
+  padding: 18px 0 12px 0;
+  border-radius: 14px 14px 0 0;
+  background: linear-gradient(90deg, #94C8BD 0%, #F8C7B0 60%, #F09CA5 100%);
+  color: #2C3E50;
+  box-shadow: 0 2px 8px rgba(240, 156, 165, 0.08);
+}
+
+.form-header h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #2C3E50;
+  margin-bottom: 4px;
+  letter-spacing: 0.5px;
+}
+
+.form-header p {
+  color: #7F8C8D;
+  font-size: 0.95rem;
+}
+
+.form-group label {
+  font-weight: 600;
+  color: #2C3E50;
+  font-size: 0.93rem;
+}
+
+.form-control {
+  width: 100%;
+  padding: 13px 16px;
+  border: 2px solid #E8F4FD;
+  border-radius: 8px;
+  font-size: 1rem;
+  background: #fff8f7;
+  color: #2C3E50;
+  font-family: inherit;
+  box-shadow: 0 2px 8px rgba(148, 200, 189, 0.07);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: #F09CA5;
+  box-shadow: 0 0 0 3px #f8c7b066, 0 2px 8px rgba(240, 156, 165, 0.13);
+  background: #fff;
+}
+
+.form-control.error {
+  border-color: #F09CA5;
+  box-shadow: 0 0 0 3px #f09ca555;
+}
+
+.form-control::placeholder {
+  color: var(--text-secondary);
+  opacity: 0.7;
+}
+
+/* Password input */
+.password-input {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: color 0.2s ease;
+  z-index: 2;
+}
+
+.password-toggle:hover {
+  color: var(--primary-color);
+}
+
+/* Message d'erreur */
+.error-message {
+  background: #fff0f3;
+  border: 1.5px solid #F09CA5;
+  color: #F09CA5;
+  padding: 10px 14px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.93rem;
+  margin-top: 2px;
+}
+
+.error-message i {
+  font-size: 0.875rem;
+}
+
+/* Bouton de connexion */
+.login-btn {
+  background: linear-gradient(90deg, #94C8BD 0%, #F8C7B0 60%, #F09CA5 100%);
+  color: #2C3E50;
+  border: none;
+  padding: 13px 0;
+  border-radius: 8px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s, color 0.2s;
+  box-shadow: 0 2px 8px rgba(148, 200, 189, 0.13);
+  margin-top: 10px;
+  letter-spacing: 0.5px;
+}
+
+.login-btn:hover:not(:disabled) {
+  background: linear-gradient(90deg, #F09CA5 0%, #F8C7B0 60%, #94C8BD 100%);
+  color: #1E293B;
+  box-shadow: 0 4px 16px rgba(240, 156, 165, 0.18);
+}
+
+.login-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Loading state */
+.loading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Footer du formulaire */
+.form-footer {
+  margin-top: 32px;
+  text-align: center;
+}
+
+.contact-info {
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+}
+
+.contact-info p {
+  margin: 4px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.contact-info i {
+  font-size: 0.75rem;
+  color: var(--primary-color);
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .left-panel {
+    flex: 0 0 50%;
+  }
+  
+  .right-panel {
+    flex: 0 0 50%;
+  }
+  
+  .student-photo {
+    width: 250px;
+    height: 250px;
+  }
+}
+
+@media (max-width: 768px) {
+  .login-container {
+    flex-direction: column;
+  }
+  
+  .left-panel {
+    flex: 0 0 40%;
+  }
+  
+  .right-panel {
+    flex: 0 0 60%;
+    padding: 20px;
+  }
+  
+  .form-container {
+    padding: 24px;
+  }
+  
+  .student-photo {
+    width: 200px;
+    height: 200px;
+  }
+  .left-overlay {
+    padding: 24px 16px 16px 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .left-panel {
+    flex: 0 0 35%;
+  }
+  
+  .right-panel {
+    flex: 0 0 65%;
+    padding: 16px;
+  }
+  
+  .form-container {
+    padding: 20px;
+  }
+  
+  .form-header h2 {
+    font-size: 1.5rem;
+  }
+  
+  .student-photo {
+    width: 150px;
+    height: 150px;
+  }
+  
+  .logo {
+    font-size: 1.1rem;
+  }
+  
+  .logo i {
+    font-size: 1.3rem;
+  }
+  .left-overlay {
+    padding: 12px 8px 8px 8px;
+  }
+}
+
+@media (max-width: 600px) {
+  .form-content { padding: 10px 2vw 8px 2vw; }
+  .form-header { padding: 10px 0 8px 0; }
+  .form-container { max-width: 99vw; }
+}
+
+/* Animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.form-container {
+  animation: fadeInUp 0.4s ease-out;
+} 

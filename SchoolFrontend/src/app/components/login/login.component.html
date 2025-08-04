@@ -1,0 +1,96 @@
+<div class="login-container">
+  <!-- Panneau gauche - Image rectangle -->
+  <div class="left-panel">
+    <img 
+      src="https://img.freepik.com/premium-photo/primary-school-kids-with-smiling-teacher-children-learning-school-education-concept-woman-tutor-with-small-pupils-holding-books-notebooks-standing-together_1029469-89503.jpg" 
+      alt="Équipe pédagogique" 
+      class="left-bg-image"
+    />
+    <div class="left-overlay">
+      <div class="logo-section">
+        <div class="logo">
+          <i class="fas fa-graduation-cap"></i>
+          <span>Collège et Lycée</span>
+        </div>
+      </div>
+      <div class="copyright">
+        <p>© 2025 Collège et Lycée. Tous droits réservés.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Panneau droit - Formulaire professionnel -->
+  <div class="right-panel">
+    <div class="form-container">
+      <div class="form-header">
+        <h2>Connexion</h2>
+        <p>Accédez à votre espace de gestion</p>
+      </div>
+
+      <form (ngSubmit)="onSubmit()" #loginForm="ngForm" class="login-form">
+        <div class="form-group">
+          <label for="email">Adresse email</label>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            [(ngModel)]="credentials.email"
+            required
+            placeholder="Entrez votre adresse email"
+            class="form-control"
+            [class.error]="errorMessage"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="password">Mot de passe</label>
+          <div class="password-input">
+            <input
+              [type]="showPassword ? 'text' : 'password'"
+              id="password"
+              name="password"
+              [(ngModel)]="credentials.password"
+              required
+              placeholder="Entrez votre mot de passe"
+              class="form-control"
+              [class.error]="errorMessage"
+            />
+            <button
+              type="button"
+              class="password-toggle"
+              (click)="togglePasswordVisibility()"
+            >
+              <i [class]="showPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="error-message" *ngIf="errorMessage">
+          <i class="fas fa-exclamation-triangle"></i>
+          {{ errorMessage }}
+        </div>
+
+        <button
+          type="submit"
+          class="login-btn"
+          [disabled]="isLoading || !loginForm.valid"
+        >
+          <span *ngIf="!isLoading">
+            Se connecter
+          </span>
+          <span *ngIf="isLoading" class="loading">
+            <i class="fas fa-spinner fa-spin"></i>
+            Connexion en cours...
+          </span>
+        </button>
+      </form>
+
+      <div class="form-footer">
+        <div class="contact-info">
+          <p><i class="fas fa-phone"></i> +221 77 777 77 77</p>
+          <p><i class="fas fa-envelope"></i> contact@ecole-primaire.fr</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div> 
