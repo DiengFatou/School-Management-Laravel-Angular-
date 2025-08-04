@@ -7,6 +7,17 @@ import { NoteService, NoteDetaillee } from '../../Service/note.service';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 import * as XLSX from 'xlsx';
+// Import dynamique de JSZip
+let JSZip: any;
+
+// Fonction pour charger JSZip de manière asynchrone
+async function loadJSZip() {
+  if (!JSZip) {
+    const module = await import('jszip');
+    JSZip = module.default;
+  }
+  return JSZip;
+}
 // Installation requise : npm install xlsx @types/xlsx jspdf html2canvas
 
 interface EleveWithNotes {
@@ -15,6 +26,7 @@ interface EleveWithNotes {
   prenom: string;
   matricule?: string;
   date_naissance?: string;
+  updatedAt?: string | Date;
   classe: {
     id: number;
     nom: string;
@@ -73,31 +85,47 @@ export class ListNote implements OnInit {
   searchTerm: string = '';
   selectedTrimestre: number = 1;
 
-  // Pagination
-  page = 1;
-  pageSize = 20; // Augmenté pour afficher plus d'élèves par page
-  collectionSize = 0;
-
   // Date actuelle pour le pied de page
   today = new Date();
 
-  // Méthode pour calculer la plage d'affichage
-  get displayRange(): { start: number, end: number } {
-    const start = (this.page - 1) * this.pageSize + 1;
-    const end = Math.min(this.page * this.pageSize, this.collectionSize);
-    return { start, end };
-  }
-
-  // Getter pour les élèves paginés
-  get paginatedEleves(): EleveWithNotes[] {
-    const start = (this.page - 1) * this.pageSize;
-    const end = start + this.pageSize;
-    return this.filteredEleves.slice(start, end);
-  }
-
   // Chargement
   isLoading = false;
+  isDownloadingAll = false;
   errorMessage = '';
+
+  /**
+   * Affiche les détails d'un élève
+   * @param eleve L'élève dont on veut afficher les détails
+   */
+  voirDetails(eleve: EleveWithNotes): void {
+    const detailsElement = document.getElementById(`details-${eleve.id}`);
+    if (detailsElement) {
+      // Masquer d'abord tous les autres détails ouverts
+      document.querySelectorAll('[id^="details-"]').forEach(el => {
+        if (el.id !== `details-${eleve.id}`) {
+          (el as HTMLElement).style.display = 'none';
+        }
+      });
+      
+      // Afficher ou masquer les détails de l'élève sélectionné
+      if (detailsElement.style.display === 'none') {
+        detailsElement.style.display = 'block';
+      } else {
+        detailsElement.style.display = 'none';
+      }
+    }
+  }
+
+  /**
+   * Ferme les détails d'un élève
+   * @param eleve L'élève dont on veut fermer les détails
+   */
+  fermerDetails(eleve: EleveWithNotes): void {
+    const detailsElement = document.getElementById(`details-${eleve.id}`);
+    if (detailsElement) {
+      detailsElement.style.display = 'none';
+    }
+  }
 
   // Propriétés pour la modale de bulletin
   showBulletinModal = false;
@@ -230,9 +258,6 @@ export class ListNote implements OnInit {
   applyFilters(): void {
     // Ne pas filtrer, afficher tous les élèves
     this.filteredEleves = [...this.elevesNotes];
-    this.collectionSize = this.filteredEleves.length;
-    this.page = 1;
-    this.page = 1; // Réinitialiser à la première page
   }
 
 
@@ -293,6 +318,8 @@ export class ListNote implements OnInit {
     if (moyenne >= 10) return 'note-faible';
     return 'note-insuffisante';
   }
+
+  // Méthode pour calculer la moyenne d'une matière
   calculateMoyenneMatiere(notes: NoteDetaillee[]): number {
     if (!notes || notes.length === 0) return 0;
     
@@ -313,7 +340,12 @@ export class ListNote implements OnInit {
     return parseFloat((sum / validNotes.length).toFixed(2));
   }
 
-  calculateMoyenneGenerale(eleve: EleveWithNotes): number {
+  /**
+   * Calcule la moyenne générale d'un élève
+   * @param eleve L'élève dont on veut calculer la moyenne générale
+   * @returns La moyenne générale de l'élève
+   */
+  getMoyenneGenerale(eleve: EleveWithNotes): number {
     if (!eleve.notes || eleve.notes.length === 0) return 0;
     
     const matieresNotes = this.groupNotesByMatiere(eleve.notes);
@@ -499,9 +531,23 @@ export class ListNote implements OnInit {
 
   // Méthode pour obtenir le rang général
   getRangGeneral(): string {
-    // Implémentez la logique pour obtenir le rang général
-    // Par exemple, trier les élèves par moyenne générale et retourner le rang
-    return '1er'; // Valeur factice pour l'exemple
+    // Implémentation simplifiée - à adapter selon la logique de votre application
+    return '1er/50';
+  }
+
+  /**
+   * Retourne la mention d'un élève en fonction de sa moyenne générale
+   * @param eleve L'élève dont on veut la mention
+   * @returns La mention (Très Bien, Bien, etc.)
+   */
+  getMention(eleve: EleveWithNotes): string {
+    const moyenne = this.getMoyenneGenerale(eleve);
+    
+    if (moyenne >= 16) return 'Très Bien';
+    if (moyenne >= 14) return 'Bien';
+    if (moyenne >= 12) return 'Assez Bien';
+    if (moyenne >= 10) return 'Passable';
+    return 'Insuffisant';
   }
 
   // Méthode pour exporter les données des élèves vers Excel
@@ -514,31 +560,32 @@ export class ListNote implements OnInit {
 
     try {
       // Préparer les données pour l'export
-      const data = this.filteredEleves.map(eleve => ({
-        'Matricule': eleve.matricule || '',
-        'Nom': eleve.nom,
-        'Prénom': eleve.prenom,
-        'Classe': `${eleve.classe.nom} (${eleve.classe.niveau})`,
-        'Moyenne Générale': this.calculateMoyenneGenerale(eleve).toFixed(2),
-        'Appréciation': this.getAppreciation(this.calculateMoyenneGenerale(eleve)),
-        'Rang': eleve.rang || 'N/A'
-      }));
+      const data = this.filteredEleves.map(eleve => {
+        const moyenne = this.getMoyenneGenerale(eleve);
+        return {
+          'Matricule': eleve.matricule || '',
+          'Nom': eleve.nom,
+          'Prénom': eleve.prenom,
+          'Classe': `${eleve.classe.nom} (${eleve.classe.niveau})`,
+          'Moyenne Générale': moyenne.toFixed(2),
+          'Appréciation': this.getAppreciation(moyenne),
+          'Rang': eleve.rang || 'N/A'
+        };
+      });
 
       // Créer une feuille de calcul
-      const ws = XLSX.utils.json_to_sheet(data);
+      const worksheet = XLSX.utils.json_to_sheet(data);
       
-      // Créer un nouveau classeur
-      const wb = XLSX.utils.book_new();
-      
-      // Ajouter la feuille de calcul au classeur
-      XLSX.utils.book_append_sheet(wb, ws, 'Notes_Élèves');
+      // Créer un classeur et ajouter la feuille de calcul
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Notes des élèves');
       
       // Générer le fichier Excel
-      XLSX.writeFile(wb, `export_notes_${new Date().toISOString().split('T')[0]}.xlsx`);
+      XLSX.writeFile(workbook, `notes-eleves-${new Date().toISOString().slice(0, 10)}.xlsx`);
       
     } catch (error) {
       console.error('Erreur lors de l\'export Excel :', error);
-      alert('Une erreur est survenue lors de l\'export des données.');
+      alert('Une erreur est survenue lors de l\'export Excel. Veuillez consulter la console pour plus de détails.');
     }
   }
 
@@ -622,6 +669,229 @@ export class ListNote implements OnInit {
       if (document.body.contains(loadingMessage)) {
         document.body.removeChild(loadingMessage);
       }
+    }
+  }
+
+  /**
+   * Télécharge les bulletins de tous les élèves en un seul fichier ZIP
+   */
+  async telechargerTousLesBulletins(): Promise<void> {
+    if (!this.filteredEleves || this.filteredEleves.length === 0) {
+      alert('Aucun élève à télécharger');
+      return;
+    }
+
+    // Demander confirmation avant de lancer le téléchargement
+    const confirmation = confirm(`Voulez-vous vraiment télécharger les bulletins des ${this.filteredEleves.length} élèves ? Cela peut prendre quelques instants.`);
+    if (!confirmation) {
+      return;
+    }
+
+    this.isDownloadingAll = true;
+    let progressDialog: HTMLElement | null = null;
+    let cancelled = false;
+    let successCount = 0;
+    const failedEleves: string[] = [];
+    
+    try {
+      // Charger JSZip de manière asynchrone
+      const JSZip = await loadJSZip();
+      
+      if (!JSZip) {
+        throw new Error('Impossible de charger la bibliothèque de compression');
+      }
+
+      const zip = new JSZip();
+      
+      // Créer un dossier pour stocker les bulletins
+      const bulletinsFolder = zip.folder('bulletins');
+      if (!bulletinsFolder) {
+        throw new Error('Impossible de créer le dossier des bulletins');
+      }
+
+      // Afficher une boîte de dialogue de progression
+      const progressDialog = document.createElement('div');
+      progressDialog.style.position = 'fixed';
+      progressDialog.style.top = '50%';
+      progressDialog.style.left = '50%';
+      progressDialog.style.transform = 'translate(-50%, -50%)';
+      progressDialog.style.backgroundColor = 'white';
+      progressDialog.style.padding = '20px';
+      progressDialog.style.borderRadius = '8px';
+      progressDialog.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';
+      progressDialog.style.zIndex = '9999';
+      progressDialog.style.textAlign = 'center';
+      progressDialog.innerHTML = `
+        <h4 style="margin-top: 0;">Génération des bulletins</h4>
+        <div class="progress mb-3">
+          <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated" 
+               role="progressbar" style="width: 0%; height: 20px;" 
+               aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+        </div>
+        <p id="progressText">Préparation du téléchargement...</p>
+        <button id="cancelBtn" class="btn btn-sm btn-outline-danger">Annuler</button>
+      `;
+      document.body.appendChild(progressDialog);
+      
+      // Gestion de l'annulation
+      let cancelled = false;
+      document.getElementById('cancelBtn')?.addEventListener('click', () => {
+        cancelled = true;
+        this.isDownloadingAll = false;
+        progressDialog.remove();
+      });
+
+      // Mettre à jour la progression
+      const updateProgress = (current: number, total: number, message: string) => {
+        const progress = Math.round((current / total) * 100);
+        const progressBar = document.getElementById('progressBar') as HTMLElement;
+        const progressText = document.getElementById('progressText') as HTMLElement;
+        
+        if (progressBar) {
+          progressBar.style.width = `${progress}%`;
+          progressBar.setAttribute('aria-valuenow', progress.toString());
+          progressBar.textContent = `${progress}%`;
+        }
+        
+        if (progressText) {
+          progressText.textContent = message;
+        }
+      };
+
+      // Télécharger chaque bulletin un par un
+      for (let i = 0; i < this.filteredEleves.length; i++) {
+        if (cancelled) break;
+        
+        const eleve = this.filteredEleves[i];
+        updateProgress(i, this.filteredEleves.length, 
+          `Génération du bulletin pour ${eleve.prenom} ${eleve.nom} (${i+1}/${this.filteredEleves.length})`);
+        
+        try {
+          // Générer le bulletin pour l'élève actuel
+          this.selectedEleveForBulletin = eleve;
+          
+          // Attendre un court instant pour que la vue soit mise à jour
+          await new Promise(resolve => setTimeout(resolve, 100));
+          
+          // Vérifier si l'élément bulletinContent existe
+          if (!this.bulletinContent || !this.bulletinContent.nativeElement) {
+            console.error('Élément bulletinContent non trouvé dans le DOM');
+            throw new Error('Impossible de trouver le contenu du bulletin');
+          }
+          
+          // Afficher la modale avant de capturer
+          this.showBulletinModal = true;
+          
+          // Attendre que la vue soit mise à jour
+          await new Promise(resolve => setTimeout(resolve, 500));
+          
+          console.log('Génération du PDF pour', eleve.prenom, eleve.nom);
+          console.log('Élément bulletinContent:', this.bulletinContent.nativeElement);
+          
+          const element = this.bulletinContent.nativeElement;
+          console.log('Dimensions de l\'élément:', {
+            width: element.offsetWidth,
+            height: element.offsetHeight,
+            scrollWidth: element.scrollWidth,
+            scrollHeight: element.scrollHeight
+          });
+          
+          // Générer le canvas avec html2canvas
+          console.log('Début de la génération du canvas...');
+          const canvas = await html2canvas(element, {
+            scale: 2,
+            logging: true, // Activer les logs de débogage
+            useCORS: true,
+            allowTaint: true,
+            scrollX: 0,
+            scrollY: 0,
+            windowWidth: element.scrollWidth,
+            windowHeight: element.scrollHeight
+          });
+          
+          console.log('Canvas généré avec succès, dimensions:', canvas.width, 'x', canvas.height);
+          
+          // Convertir le canvas en blob
+          console.log('Conversion du canvas en blob...');
+          const blob = await new Promise<Blob>((resolve, reject) => {
+            canvas.toBlob((blob: Blob | null) => {
+              if (blob) {
+                console.log('Blob créé avec succès, taille:', blob.size, 'octets');
+                resolve(blob);
+              } else {
+                console.error('Échec de la création du blob à partir du canvas');
+                reject(new Error('Erreur lors de la conversion en PDF'));
+              }
+            }, 'application/pdf');
+          });
+          
+          // Ajouter le PDF au ZIP
+          const fileName = `Bulletin_${eleve.nom}_${eleve.prenom}_T${this.selectedTrimestre}.pdf`
+            .replace(/[^a-z0-9_\-\.]/gi, '_'); // Nettoyer le nom de fichier
+          
+          console.log('Ajout du fichier au ZIP:', fileName);
+          bulletinsFolder.file(fileName, blob);
+          successCount++;
+          console.log('Fichier ajouté avec succès au ZIP');
+          
+        } catch (error) {
+          console.error(`Erreur lors de la génération du bulletin pour ${eleve.prenom} ${eleve.nom}`, error);
+          failedEleves.push(`${eleve.prenom} ${eleve.nom}`);
+          continue; // Continuer avec le prochain élève même en cas d'erreur
+        }
+      }
+      
+      if (cancelled) {
+        progressDialog.remove();
+        return;
+      }
+      
+      // Vérifier si au moins un bulletin a été généré
+      if (successCount === 0) {
+        throw new Error('Aucun bulletin n\'a pu être généré');
+      }
+      
+      // Mettre à jour la progression
+      updateProgress(this.filteredEleves.length, this.filteredEleves.length, 
+        'Préparation de l\'archive...');
+      
+      // Générer le fichier ZIP
+      const zipContent = await zip.generateAsync({
+        type: 'blob',
+        compression: 'DEFLATE',
+        compressionOptions: { level: 6 }
+      });
+      
+      // Télécharger le ZIP
+      const zipUrl = URL.createObjectURL(zipContent);
+      const a = document.createElement('a');
+      a.href = zipUrl;
+      a.download = `Bulletins_T${this.selectedTrimestre}_${new Date().toISOString().split('T')[0]}.zip`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(zipUrl);
+      
+      // Afficher un message de succès avec les éventuelles erreurs
+      let message = `Téléchargement réussi !\n`;
+      message += `${successCount} bulletin(s) téléchargé(s) avec succès.`;
+      
+      if (failedEleves.length > 0) {
+        message += `\n\nÉchecs (${failedEleves.length}) :\n- ${failedEleves.join('\n- ')}`;
+      }
+      
+      alert(message);
+      
+    } catch (error) {
+      console.error('Erreur lors du téléchargement des bulletins', error);
+      alert(`Erreur lors du téléchargement des bulletins : ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
+    } finally {
+      // Nettoyer
+      const dialog = document.querySelector('div[style*="position: fixed"][style*="top: 50%"]');
+      if (dialog) dialog.remove();
+      
+      this.isDownloadingAll = false;
+      this.selectedEleveForBulletin = null;
     }
   }
 }

@@ -41,27 +41,7 @@
         </div>
       </div>
       
-      <!-- Section de débogage -->
-      <div *ngIf="!isLoading && !errorMessage" class="mb-4 p-3 bg-light rounded">
-        <h5 class="text-primary">Informations de débogage</h5>
-        <div class="row">
-          <div class="col-md-6">
-            <p class="mb-1">Nombre d'élèves chargés: <span class="fw-bold">{{ elevesNotes.length }}</span></p>
-            <p class="mb-1">Nombre d'élèves filtrés: <span class="fw-bold">{{ filteredEleves.length }}</span></p>
-            <p class="mb-1">Page actuelle: <span class="fw-bold">{{ page }}</span></p>
-          </div>
-          <div class="col-md-6">
-            <p class="mb-1">Taille de la collection: <span class="fw-bold">{{ collectionSize }}</span></p>
-            <p class="mb-1">Éléments par page: <span class="fw-bold">{{ pageSize }}</span></p>
-            <p class="mb-1">Affichage: <span class="fw-bold">{{ displayRange.start }} à {{ displayRange.end }} sur {{ collectionSize }}</span></p>
-          </div>
-        </div>
-        <div *ngIf="elevesNotes.length > 0" class="mt-2">
-          <button class="btn btn-sm btn-outline-secondary" (click)="logToConsole()">
-            <i class="fas fa-code me-1"></i> Afficher les données brutes dans la console
-          </button>
-        </div>
-      </div>
+
 
       <!-- Liste des élèves avec leurs notes -->
       <div *ngIf="!isLoading && !errorMessage && elevesNotes.length > 0">
@@ -69,52 +49,129 @@
         <div class="d-flex justify-content-between align-items-center mb-4">
           <div class="d-flex align-items-center">
             <h4 class="mb-0 me-3">
-              Liste complète des élèves
+              <i class="fas fa-users me-2"></i>Liste des élèves
               <span class="badge bg-primary ms-2">{{ filteredEleves.length }}</span>
             </h4>
             <div class="btn-group" role="group">
-              <button class="btn btn-outline-secondary btn-sm" (click)="exportToExcel()">
-                <i class="fas fa-file-export me-1"></i> Exporter les données
+              <button class="btn btn-outline-primary btn-sm me-2" (click)="exportToExcel()">
+                <i class="fas fa-file-export me-1"></i> Exporter en Excel
+              </button>
+              <button class="btn btn-outline-success btn-sm" (click)="telechargerTousLesBulletins()" [disabled]="isDownloadingAll">
+                <i class="fas fa-file-download me-1"></i>
+                <span *ngIf="!isDownloadingAll">Télécharger tous les bulletins</span>
+                <span *ngIf="isDownloadingAll">
+                  <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                  Téléchargement...
+                </span>
               </button>
             </div>
           </div>
-          <div class="text-muted small">
-            Page {{ page }} sur {{ (collectionSize / pageSize) | number:'1.0-0' }}
-            ({{ collectionSize }} élèves au total)
+          <div class="d-flex align-items-center">
+            <div class="input-group input-group-sm" style="width: 250px;">
+              <span class="input-group-text"><i class="fas fa-search"></i></span>
+              <input type="text" class="form-control" placeholder="Rechercher un élève..." 
+                     [(ngModel)]="searchTerm" (input)="applyFilters()">
+            </div>
+            <div class="ms-3 text-muted small">
+              {{ filteredEleves.length }} élèves
+            </div>
           </div>
         </div>
         
-        <!-- Carte par élève -->
-        <div *ngFor="let eleve of paginatedEleves" class="card mb-4 border-0 shadow-sm">
-          <!-- En-tête de la carte élève -->
-          <div class="card-header bg-white d-flex align-items-center py-3">
-            <!-- Photo et informations de base -->
-            <div class="d-flex align-items-center flex-grow-1">
-              <div class="avatar avatar-xl bg-light rounded-circle me-3 d-flex align-items-center justify-content-center">
-                <i class="fas fa-user-graduate fa-2x text-muted"></i>
-              </div>
-              <div>
-                <h4 class="mb-1">
-                  {{ eleve.prenom }} <strong>{{ eleve.nom | uppercase }}</strong>
-                </h4>
-                <div class="d-flex flex-wrap gap-2 align-items-center">
-                  <span class="badge bg-primary">
-                    <i class="fas fa-graduation-cap me-1"></i>
-                    {{ eleve.classe.nom }} ({{ eleve.classe.niveau }})
-                  </span>
-                  <span class="text-muted small">
-                    <i class="fas fa-id-card me-1"></i> {{ eleve.matricule || 'Sans matricule' }}
-                  </span>
-                </div>
-              </div>
+        <!-- Tableau des élèves -->
+        <div class="card border-0 shadow-sm mb-4">
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th class="ps-4">Élève</th>
+                  <th>Classe</th>
+                  <th>Moyenne</th>
+                  <th>Mentions</th>
+                  <th class="text-end pe-4">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let eleve of filteredEleves" class="border-top">
+                  <td class="ps-4">
+                    <div class="d-flex align-items-center">
+                      <div class="avatar avatar-md bg-light rounded-circle me-3 d-flex align-items-center justify-content-center">
+                        <i class="fas fa-user-graduate text-muted"></i>
+                      </div>
+                      <div>
+                        <div class="fw-semibold">{{ eleve.prenom }} {{ eleve.nom | uppercase }}</div>
+                        <small class="text-muted">Matricule: {{ eleve.matricule || 'Non défini' }}</small>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <span class="badge bg-light text-dark">
+                      <i class="fas fa-chalkboard me-1"></i>
+                      {{ eleve.classe.nom || 'Non affecté' }}
+                    </span>
+                  </td>
+                  <td>
+                    <span class="badge rounded-pill" 
+                          [ngClass]="{
+                            'bg-success': getMoyenneGenerale(eleve) >= 12,
+                            'bg-warning': getMoyenneGenerale(eleve) >= 10 && getMoyenneGenerale(eleve) < 12,
+                            'bg-danger': getMoyenneGenerale(eleve) < 10
+                          }">
+                      {{ getMoyenneGenerale(eleve) | number:'1.2-2' }}/20
+                    </span>
+                  </td>
+                  <td>
+                    <span class="badge" 
+                          [ngClass]="{
+                            'bg-success': getMention(eleve) === 'Très Bien',
+                            'bg-info': getMention(eleve) === 'Bien',
+                            'bg-primary': getMention(eleve) === 'Assez Bien',
+                            'bg-warning': getMention(eleve) === 'Passable',
+                            'bg-danger': getMention(eleve) === 'Insuffisant'
+                          }">
+                      {{ getMention(eleve) }}
+                    </span>
+                  </td>
+                  <td class="pe-4">
+                    <button class="btn btn-sm btn-outline-primary me-2" (click)="voirBulletinComplet(eleve)">
+                      <i class="fas fa-file-alt me-1"></i> Bulletin
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary" (click)="voirDetails(eleve)">
+                      <i class="fas fa-eye me-1"></i> Détails
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Détails de l'élève (caché par défaut) -->
+        <div *ngFor="let eleve of filteredEleves" class="card mb-4 border-0 shadow-sm" id="details-{{eleve.id}}" style="display: none;">
+          <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+            <h5 class="mb-0">
+              <i class="fas fa-info-circle me-2 text-primary"></i>
+              Détails de {{ eleve.prenom }} {{ eleve.nom | uppercase }}
+            </h5>
+            <button class="btn-close" (click)="fermerDetails(eleve)"></button>
+          </div>
+          <div class="card-body">
+            <div class="d-flex align-items-center mb-3">
+              <span class="badge bg-primary me-2">
+                <i class="fas fa-graduation-cap me-1"></i>
+                {{ eleve.classe.nom }} ({{ eleve.classe.niveau }})
+              </span>
+              <span class="text-muted small">
+                <i class="fas fa-id-card me-1"></i> {{ eleve.matricule || 'Sans matricule' }}
+              </span>
             </div>
             
             <!-- Moyenne et rang -->
             <div class="d-flex align-items-center ms-4">
               <div class="text-center px-3">
                 <div class="text-uppercase small text-muted">Moyenne</div>
-                <div class="h3 mb-0 fw-bold" [class]="getMoyenneClass(calculateMoyenneGenerale(eleve))">
-                  {{ calculateMoyenneGenerale(eleve) | number:'1.2-2' }}
+                <div class="h3 mb-0 fw-bold" [class]="getMoyenneClass(getMoyenneGenerale(eleve))">
+                  {{ getMoyenneGenerale(eleve) | number:'1.2-2' }}
                   <small class="text-muted">/20</small>
                 </div>
               </div>
@@ -262,15 +319,15 @@
                     </td>
                     <td class="text-center">
                       <div class="d-flex flex-column align-items-center">
-                        <span class="fw-bold fs-4" [class]="getMoyenneClass(calculateMoyenneGenerale(eleve))">
-                          {{ calculateMoyenneGenerale(eleve) | number:'1.2-2' }}
+                        <span class="fw-bold fs-4" [class]="getMoyenneClass(getMoyenneGenerale(eleve))">
+                          {{ getMoyenneGenerale(eleve) | number:'1.2-2' }} / 20
                         </span>
                         <small class="text-muted">/20</small>
                       </div>
                     </td>
                     <td class="text-center">
-                      <span class="badge p-2" [class]="getMoyenneClass(calculateMoyenneGenerale(eleve))">
-                        {{ getAppreciation(calculateMoyenneGenerale(eleve)) }}
+                      <span class="badge p-2" [class]="getMoyenneClass(getMoyenneGenerale(eleve))">
+                        {{ getAppreciation(getMoyenneGenerale(eleve)) }}
                       </span>
                     </td>
                     <td class="pe-4">
@@ -327,42 +384,28 @@
           </div>
         </div>
         
-        <!-- Pagination -->
-        <div class="d-flex justify-content-between align-items-center mt-4">
-          <div class="text-muted">
-            Affichage de {{ displayRange.start }} à {{ displayRange.end }} sur {{ elevesNotes.length }} élèves
-          </div>
-          <ngb-pagination 
-            [(page)]="page" 
-            [pageSize]="pageSize" 
-            [collectionSize]="elevesNotes.length"
-            [maxSize]="5"
-            [rotate]="true"
-            [boundaryLinks]="true"
-            class="d-flex justify-content-end">
-          </ngb-pagination>
-        </div>
+
       </div>
     </div>
-    
-    <!-- Pied de page -->
-    <div class="card-footer text-muted small">
-      <div class="d-flex justify-content-between">
-        <div>
-          <i class="fas fa-info-circle me-1"></i> 
-          Année scolaire 2024-2025 - {{ getCurrentTrimestre() }} - Édition du {{ today | date:'dd/MM/yyyy' }}
-        </div>
-        <div>
-          <span class="me-3">
-            <i class="fas fa-circle text-success me-1"></i> ≥ 10/20
-          </span>
-          <span class="me-3">
-            <i class="fas fa-circle text-warning me-1"></i> 8-9.99/20
-          </span>
-          <span>
-            <i class="fas fa-circle text-danger me-1"></i> < 8/20
-          </span>
-        </div>
+  </div>
+  
+  <!-- Pied de page -->
+  <div class="card-footer text-muted small">
+    <div class="d-flex justify-content-between">
+      <div>
+        <i class="fas fa-info-circle me-1"></i> 
+        Année scolaire 2024-2025 - {{ getCurrentTrimestre() }} - Édition du {{ today | date:'dd/MM/yyyy' }}
+      </div>
+      <div>
+        <span class="me-3">
+          <i class="fas fa-circle text-success me-1"></i> ≥ 10/20
+        </span>
+        <span class="me-3">
+          <i class="fas fa-circle text-warning me-1"></i> 8-9.99/20
+        </span>
+        <span>
+          <i class="fas fa-circle text-danger me-1"></i> &lt; 8/20
+        </span>
       </div>
     </div>
   </div>
@@ -512,14 +555,14 @@
                   {{ getTotalCoefficients(selectedEleveForBulletin.notes) }}
                 </td>
                 <td class="text-center fw-bold" style="font-size: 1.4rem;">
-                  <span [style.color]="getMoyenneColor(calculateMoyenneGenerale(selectedEleveForBulletin))">
-                    {{ calculateMoyenneGenerale(selectedEleveForBulletin) | number:'1.2-2' }}
+                  <span [style.color]="getMoyenneColor(getMoyenneGenerale(selectedEleveForBulletin))">
+                    {{ getMoyenneGenerale(selectedEleveForBulletin) | number:'1.2-2' }}
                   </span>
                 </td>
                 <td class="text-center">
-                  <span class="appreciation-badge" [style.background-color]="getAppreciationColor(calculateMoyenneGenerale(selectedEleveForBulletin))" [style.color]="'#000'" style="font-size: 0.9rem; padding: 0.4em 1em;">
-                    <i class="fas fa-trophy me-1"></i>
-                    {{ getAppreciation(calculateMoyenneGenerale(selectedEleveForBulletin)) }}
+                  <span class="appreciation-badge" [style.background-color]="getAppreciationColor(getMoyenneGenerale(selectedEleveForBulletin))" [style.color]="'#000'" style="font-size: 0.9rem; padding: 0.4em 1em;">
+                    <i class="fas fa-star me-1"></i>
+                    {{ getAppreciation(getMoyenneGenerale(selectedEleveForBulletin)) }}
                   </span>
                   <div class="mt-1 small" style="color: var(--bulletin-dark);">
                     Rang: {{ getRangGeneral() || '-' }}
@@ -571,8 +614,9 @@
                 <div>
                   <i class="fas fa-clipboard-check me-2"></i> DÉCISION DU CONSEIL DE CLASSE
                 </div>
-                <span class="badge" [style.background-color]="getAppreciationColor(calculateMoyenneGenerale(selectedEleveForBulletin))" [style.color]="'#000'">
-                  {{ getAppreciation(calculateMoyenneGenerale(selectedEleveForBulletin)) }}
+                <span class="badge" [style.background-color]="getAppreciationColor(getMoyenneGenerale(selectedEleveForBulletin))" [style.color]="'#000'">
+                  <i class="fas fa-star me-1"></i>
+                  {{ getAppreciation(getMoyenneGenerale(selectedEleveForBulletin)) }}
                 </span>
               </div>
               <div class="card-body">

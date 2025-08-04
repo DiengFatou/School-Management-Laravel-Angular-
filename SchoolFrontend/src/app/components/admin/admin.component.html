@@ -11,8 +11,7 @@
       <a (click)="navigateTo('classes')" [class.active]="currentView === 'classes'"><i class="fas fa-chalkboard"></i> Classes</a>
       <a (click)="navigateTo('enseignants')" [class.active]="currentView === 'enseignants'"><i class="fas fa-user-tie"></i> Enseignants</a>
       <a (click)="navigateTo('matieres')" [class.active]="currentView === 'matieres'"><i class="fas fa-book"></i> Matières</a>
-      <a (click)="navigateTo('notes')" [class.active]="currentView === 'notes'"><i class="fas fa-edit"></i> Notes</a>
-      <a (click)="navigateTo('bulletins')" [class.active]="currentView === 'bulletins'"><i class="fas fa-file-alt"></i> Bulletins</a>
+      <a (click)="navigateTo('notes')" [class.active]="currentView === 'notes' || currentView === 'bulletins'"><i class="fas fa-edit"></i> Notes-bulletins</a>
     </nav>
     <div class="sidebar-footer">
       <button class="logout-btn" (click)="logout()"><i class="fas fa-sign-out-alt"></i> <span>Déconnexion</span></button>

@@ -153,7 +153,7 @@ class BulletinController extends Controller
      * Télécharge le bulletin au format PDF
      *
      * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @return \Symfony\Component\HttpFoundation\BinaryFileResponse
      */
     public function telechargerPdf($id)
     {
@@ -184,18 +184,31 @@ class BulletinController extends Controller
                  ->setPaper('A4', 'portrait')
                  ->setOptions($options);
         
-        // Si vous voulez sauvegarder le PDF
-        $filename = "bulletin-{$bulletin->eleve->nom}-{$bulletin->trimestre}-{$bulletin->anneeScolaire->annee}.pdf";
-        $path = "bulletins/{$filename}";
+        // Créer le répertoire s'il n'existe pas
+        $directory = 'bulletins';
+        if (!Storage::exists($directory)) {
+            Storage::makeDirectory($directory);
+        }
+        
+        // Générer un nom de fichier unique avec un timestamp
+        $timestamp = now()->format('YmdHis');
+        $filename = "bulletin-{$bulletin->eleve->nom}-{$bulletin->trimestre}-{$bulletin->anneeScolaire->annee}-{$timestamp}.pdf";
+        $path = "{$directory}/{$filename}";
         
         // Sauvegarder le PDF
         Storage::put($path, $pdf->output());
         
-        // Mettre à jour le chemin du PDF
-        $bulletin->update(['pdf_path' => $path]);
+        // Mettre à jour le bulletin avec le chemin du PDF
+        $bulletin->update([
+            'pdf_path' => $path,
+            'date_generation' => now()
+        ]);
         
         // Télécharger le PDF avec les en-têtes appropriés
-        return $pdf->download($filename);
+        return response()->download(storage_path("app/{$path}"), $filename, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="' . $filename . '"'
+        ]);
     }
 
     /**
